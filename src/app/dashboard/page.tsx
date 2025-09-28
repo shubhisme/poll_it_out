@@ -1,8 +1,13 @@
 import React from 'react'
+import Navbar from '../components/Navbar'
+import Hero from '../components/Hero'
 
 function page() {
   return (
-    <div>Inside Dashboard/Page Route...</div>
+    <>
+        <Navbar/>
+        <Hero/>
+    </>
   )
 }
 

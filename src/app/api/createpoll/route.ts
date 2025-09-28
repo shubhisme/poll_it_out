@@ -20,10 +20,8 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { question, multi_true, text } = body;
 
-    // generate 4-digit code
     const shareable_code = Math.floor(Math.random() * 9000) + 1000;
 
-    // create poll first
     const pollCreated = await Poll.create({
       question,
       created_by: user_objId._id,
@@ -47,7 +45,7 @@ export async function POST(req: Request) {
     // update poll with option ids
     pollCreated.options.push(...createdOptions);
 
-    // update polls_created in User collection
+    // update polls_created in User colle6hction
     const upd_usr = await User.findOneAndUpdate(
         {_id : user_objId}, 
         {$addToSet : {polls_created : pollCreated._id}},
