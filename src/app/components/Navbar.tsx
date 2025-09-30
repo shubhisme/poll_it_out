@@ -9,21 +9,21 @@ function Navbar() {
             <p>Poll It Out</p>
 
             <ul className='flex justify-around gap-x-5 items-center'>
-                <li className='flex items-center gap-x-2'>
+                <li className='flex items-center gap-x-2 shadow-[2px_2px_0px_gray] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer'>
                     <Link href="/dashboard/create-poll" className='flex items-center gap-x-2 border-2 px-2'>
                         <Plus className='w-4 h-4 text-black'/>
                         <p>Create Poll</p>
                     </Link>
                 </li>
 
-                <li className='flex items-center gap-x-2'>
+                <li className='flex items-center gap-x-2 shadow-[2px_2px_0px_gray] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer'>
                     <Link href="/dashboard/create-poll" className='flex items-center gap-x-2 border-2 px-2'>
                         <Users className='w-4 h-4 text-black'/>
                         <p>Join A Poll</p>
                     </Link>
                 </li>
 
-                <li>
+                <li className='flex items-center gap-x-2 shadow-[2px_2px_0px_gray] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer'>
                     <Link href="/dashboard/create-poll" className='flex items-center gap-x-2 border-2 px-2'>
                         <Book className='w-4 h-4 text-black'/>
                         <p>About</p>

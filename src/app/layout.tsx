@@ -22,7 +22,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${courierPrime.variable} ${robotoMono.variable} antialiased`}>
+      <body className={`${courierPrime.variable} ${robotoMono.variable} antialiased lekton-regular`}>
         <ClerkProvider>
           {children}
         </ClerkProvider>

@@ -1,13 +1,19 @@
 @import "tailwindcss";
 
-
-/* hide number input arrows */
-.no-spinner::-webkit-outer-spin-button,
-.no-spinner::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+.lekton-regular {
+  font-family: "Lekton", monospace;
+  font-weight: 400;
+  font-style: normal;
 }
 
-.no-spinner {
-  -moz-appearance: textfield; /* Firefox */
+.lekton-bold {
+  font-family: "Lekton", monospace;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.lekton-regular-italic {
+  font-family: "Lekton", monospace;
+  font-weight: 400;
+  font-style: italic;
 }
