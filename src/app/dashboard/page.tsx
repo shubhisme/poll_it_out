@@ -1,8 +1,8 @@
 import React from 'react'
 import Navbar from '../components/Navbar'
-import Hero from '../components/Hero'
+import Hero from './_components/Hero'
 
-function page() {
+function Page() {
   return (
     <>
         <Navbar/>
@@ -11,4 +11,4 @@ function page() {
   )
 }
 
-export default page
+export default Page

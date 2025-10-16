@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 function Page() {
-    const router = useRouter;
+    const router = useRouter();
     const {isLoaded,setActive,signUp} = useSignUp();
     const [email ,setemail] = useState("");
     const [password ,setpassword] = useState("");
@@ -67,13 +67,13 @@ function Page() {
                 redirectUrl: "/signin/sso-callback",
                 redirectUrlComplete: "/dashboard"
             });
-            console.log(sigininrec);
+            console.log("User signup: ",sigininrec);
             <SyncUser/>
             router.push("/dashboard");
             }
         catch(err){
             console.log(err.errors?.[0]?.message || "You are already signed In....");
-            seterror(err.errors?.[0]?.long_message)
+            seterror(err.errors?.[0]?.long_message || "You are already signed In....")
         }
     }
     return (

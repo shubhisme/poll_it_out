@@ -40,12 +40,17 @@ export default function CustomSignIn() {
         console.log(result); 
       }
     } catch (err) {
-      setError(err.errors[0].message);
+      err && setError(err.errors[0].message);
     }
   };
 
     const handelGoogleLogin = async()=>{
         setError("");
+
+        // const users = await clerkClient.users.getUserList();
+        // console.log("Fetched users:", users);
+
+        /* this is server-side only , to check if user exists in clerk database or not . make an api call to /api/checkuser  */
 
         try{
             const sigininrec = await signIn?.authenticateWithRedirect({

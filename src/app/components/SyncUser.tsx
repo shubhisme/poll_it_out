@@ -8,11 +8,23 @@ function SyncUser() {
 
     console.log("Is signed in: ",isSignedIn);
 
-    useEffect(()=>{
-        if(isSignedIn){
-            console.log("fetching /api/connectdb");
-            fetch("/api/connectdb" , {method: "POST"})
-        }
+    useEffect(() => {
+        const syncUser = async () => {
+            if(isSignedIn){
+                console.log("fetching /api/connectdb");
+
+                try{
+                    const response = await fetch("/api/connectdb" , {method: "POST"});
+                    if(response.status == 401){
+                        console.log("User is not authorized");
+                        throw new Error("Failed to connect to database");
+                    }
+                }catch(err){
+                    console.log("Error fetching /api/connectdb:", err);
+                }
+            }
+        };
+        syncUser();
     }, [isSignedIn])
 
   return (

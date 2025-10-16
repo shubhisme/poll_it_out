@@ -1,3 +1,4 @@
+import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
 import { Book, Plus, Users } from 'lucide-react'
 import Link from 'next/link'
 import React from 'react'
@@ -32,29 +33,46 @@ function Navbar() {
             </ul>
 
             <ul className="flex justify-around items-center gap-x-3">
-            <li>Account</li>
+                <li>Account</li>
 
-            <li>
-                <Link href="/signin">
-                <button
-                    className="font-semibold bg-black text-white px-2 py-1 shadow-[2px_2px_0px_gray]
-                            active:translate-y-[2px] active:shadow-none transition-all cursor-pointer flex items-center gap-x-1"
-                >
-                    Sign In
-                </button>
-                </Link>
-            </li>
+                <SignedOut>
+                    <li>
+                        <Link href="/signin">
+                        <button
+                            className="font-semibold bg-black text-white px-2 py-1 shadow-[2px_2px_0px_gray]
+                                    active:translate-y-[2px] active:shadow-none transition-all cursor-pointer flex items-center gap-x-1"
+                        >
+                            Sign In
+                        </button>
+                        </Link>
+                    </li>
 
-            <li>
-                <Link href="/signup">
-                <button
-                    className="font-semibold bg-black text-white px-2 py-1 shadow-[2px_2px_0px_gray]
+                    <li>
+                        <Link href="/signup">
+                        <button
+                            className="font-semibold bg-black text-white px-2 py-1 shadow-[2px_2px_0px_gray]
                             active:translate-y-[2px] active:shadow-none transition-all cursor-pointer"
-                >
-                    Sign Up
-                </button>
-                </Link>
-            </li>
+                        >
+                            Sign Up
+                        </button>
+                        </Link>
+                    </li>
+                </SignedOut>
+
+                <li>
+                    <SignedIn>
+                        <UserButton 
+                            appearance={{
+                                elements: {
+                                    userButtonAvatarBox: "w-20 h-20", // custom classes
+                                    userButtonPopoverCard: "bg-gray-900 text-white shadow-lg",
+                                },
+                                variables: {
+                                    colorPrimary: "#2563eb", // Tailwind blue-600
+                                }
+                            }}  />
+                    </SignedIn>
+                </li>
             </ul>
 
         </nav>
