@@ -1,9 +1,19 @@
+'use client'
+
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/nextjs'
 import { Book, Plus, Users } from 'lucide-react'
 import Link from 'next/link'
-import React from 'react'
+import React, { useState } from 'react'
+import { usePathname } from 'next/navigation'
 
 function Navbar() {
+    // const [isPath , setIspath] = useState(false);
+
+    const path = usePathname();
+    console.log(path);
+    const isPath = path.includes("/dashboard/poll/");
+
+
   return (
     <div className='flex items-center justify-center'>
         <nav className='w-[100%] bg-white h-full flex justify-between px-15 py-4 border-b-2 items-center'>
@@ -13,7 +23,8 @@ function Navbar() {
                 <li className='flex items-center gap-x-2 shadow-[2px_2px_0px_gray] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer'>
                     <Link href="/dashboard/create-poll" className='flex items-center gap-x-2 border-2 px-2'>
                         <Plus className='w-4 h-4 text-black'/>
-                        <p>Create Poll</p>
+                        {isPath ? <p>Create New Poll</p> :
+                            <p>Create Poll</p>}
                     </Link>
                 </li>
 
@@ -24,12 +35,14 @@ function Navbar() {
                     </Link>
                 </li>
 
-                <li className='flex items-center gap-x-2 shadow-[2px_2px_0px_gray] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer'>
-                    <Link href="/dashboard/create-poll" className='flex items-center gap-x-2 border-2 px-2'>
-                        <Book className='w-4 h-4 text-black'/>
-                        <p>About</p>
-                    </Link>
-                </li>
+                {!isPath && 
+                    <li className='flex items-center gap-x-2 shadow-[2px_2px_0px_gray] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer'>
+                        <Link href="/dashboard/create-poll" className='flex items-center gap-x-2 border-2 px-2'>
+                            <Book className='w-4 h-4 text-black'/>
+                            <p>About</p>
+                        </Link>
+                    </li>
+                }
             </ul>
 
             <ul className="flex justify-around items-center gap-x-3">

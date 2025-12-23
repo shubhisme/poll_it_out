@@ -1,11 +1,12 @@
 import {auth,clerkClient} from "@clerk/nextjs/server"
 import dbconnect from "@/lib/mongodb"
-import User from "@/app/models/user"
+import {User} from "@/app/models/schema"
 import { NextResponse } from "next/server";
 
 export async function POST() {
 
     try{
+        await dbconnect();
         const {userId} = await auth();
         if (!userId){
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -15,28 +16,25 @@ export async function POST() {
         const clerkUser = await client.users.getUser(userId);
 
         const userdata = {
-            clerkId: clerkUser.id,
+            clerk_id: clerkUser.id,
             email: clerkUser.emailAddresses[0].emailAddress,
             authenticated:true,
-            usrname : clerkUser.username || clerkUser.emailAddresses[0].emailAddress.split("@")[0]
+            username : clerkUser.username || clerkUser.emailAddresses[0].emailAddress.split("@")[0]
         }
 
-        await dbconnect();
         const user = await User.findOneAndUpdate(
-            {clerk_id: userdata.clerkId},
+            {clerk_id: userdata.clerk_id},
             {
                 email: userdata.email,
                 authenticated: userdata.authenticated,
-                username: userdata.usrname,
-                polls_created: [],
-                polls_voted: []
+                username: userdata.username,
             },
             {new:true, upsert: true}
         )
 
         console.log("DB Connected: ",userdata);
 
-        return NextResponse.json(user , {status: 200})
+        return NextResponse.json( {data: user} , {status: 200})
     }catch(err){
         console.log(err);
 

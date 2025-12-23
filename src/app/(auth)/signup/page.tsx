@@ -68,7 +68,17 @@ function Page() {
                 redirectUrlComplete: "/dashboard"
             });
             console.log("User signup: ",sigininrec);
-            <SyncUser/>
+            
+            // const connect_db = await fetch("/api/connectdb",{
+            //     method: "POST",
+            //     headers: {
+            //         "Content-Type": "application/json"
+            //     }
+            // })
+            // const {data , error} = await connect_db.json();
+
+            // console.log("DB Connected: ",data);
+
             router.push("/dashboard");
             }
         catch(err){
