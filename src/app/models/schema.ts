@@ -8,9 +8,6 @@ const userSchema = new mongoose.Schema({
 } , {timestamps: true})
 
 const optionsSchema = new mongoose.Schema({
-    // poll_id: {type: mongoose.Schema.Types.ObjectId, ref:"Poll", required: true},
-    // votes: {type: mongoose.Schema.Types.ObjectId , ref: "Votes"},
-    // voters: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     text: {type: String , required : true , trim : true},
 
     votes_count : {type : Number , default : 0}

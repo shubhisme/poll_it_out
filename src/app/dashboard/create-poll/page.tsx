@@ -3,11 +3,12 @@
 import Navbar from "@/app/components/Navbar";
 import { Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import type Poll_data from "@/app/types/Poll_types";
+import { useUser } from "@clerk/nextjs";
 
 function Page() {
-  // const {isLoaded , isSignedIn , user} = useUser();
+  const {isLoaded , isSignedIn , user} = useUser();
   const [polld, setPolld] = useState<Poll_data>({
     question: "",
     description: "",

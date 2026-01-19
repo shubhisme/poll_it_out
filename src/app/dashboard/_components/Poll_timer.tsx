@@ -5,7 +5,7 @@ export default function Poll_timer({exp_at, onExpire} : {exp_at: Date | string, 
     const [displayTime , setDisplaytime] = useState<string | null>(null);
 
     useEffect(()=>{
-        console.log({exp_at : exp_at});
+        // console.log({exp_at : exp_at});
         if(!exp_at){return;}
 
         const timer = new Date(exp_at).getTime();

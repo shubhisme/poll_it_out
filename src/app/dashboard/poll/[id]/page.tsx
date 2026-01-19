@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import Poll_timer from '../../_components/Poll_timer';
+import { useAuth } from '@clerk/nextjs';
 
 const Page = () => {
     const [poll_data, setPollData] = useState<any>();
@@ -14,6 +15,7 @@ const Page = () => {
     const [err, setError] = useState("");
     const [isPollExpired, setIsPollExpired] = useState(false);
     const { id } = useParams();
+    const {userId} = useAuth();
 
     const isPoll = useCallback(
         async () => {
@@ -43,19 +45,54 @@ const Page = () => {
     }, [id]);
 
     const handleCheckboxChange = (optionId: string) => {
-        setSelectedOptions(prev =>
-            prev.includes(optionId)
+        setSelectedOptions(prev => {
+            const newSelections = prev.includes(optionId)
                 ? prev.filter(id => id !== optionId)
-                : [...prev, optionId]
-        );
+                : [...prev, optionId];
+            
+            console.log({selectedOptions : newSelections});
+            return newSelections;
+        });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = useCallback(async (e: React.FormEvent) => {
         e.preventDefault();
         const selections = poll_data?.multi_true ? selectedOptions : [selectedOption];
         console.log("Submitted selections:", selections);
-        // TODO: Add vote submission logic
-    };
+
+        // if(Array.isArray(selections)){
+        //     selections.map(s =>{
+                
+        //     })
+        // } 
+
+        const vote_api_data = {
+            pollid : id,
+            options_id : selections,
+            clerk_id : userId
+        }
+
+        console.log({vote_api_data : vote_api_data});
+
+        try{
+            const vote_api = await fetch(`/api/votepoll` , {
+                method : "POST",
+                headers :{
+                    "Content-Type" : "application/json"
+                },
+
+                body : JSON.stringify(vote_api_data)
+            })
+
+            const data = (await vote_api).json()
+            console.log({data});
+
+        }catch(err){
+            err?.details ? setError(err?.details  || "Failed to vote") : setError("Failed to vote");
+            console.log({err});
+        }
+
+    }, [id, poll_data, selectedOptions, selectedOption, userId]);
 
     if (!poll_data) {
         return (
@@ -155,7 +192,10 @@ const Page = () => {
                                                 checked={selectedOption === option._id}
                                                 onCheckedChange={(checked) => {
                                                     // Toggle behavior: if already selected, deselect; otherwise select this one
-                                                    setSelectedOption(checked ? option._id : "");
+                                                    const newval = checked ? option._id : "";
+                                                    setSelectedOption(newval);
+
+                                                    console.log({options : newval})
                                                 }}
                                                 className="border-2 data-[state=checked]:bg-white data-[state=checked]:text-black"
                                             />
@@ -176,7 +216,7 @@ const Page = () => {
                             <Button
                                 type="submit"
                                 size="lg"
-                                disabled={isPollExpired || (poll_data?.multi_true ? selectedOptions.length === 0 : !selectedOption)}
+                                disabled={(poll_data?.expires_at && isPollExpired) || (poll_data?.multi_true ? selectedOptions.length === 0 : !selectedOption)}
                                 className="
                                     px-12 py-6 text-xl font-bold
                                     bg-white text-black border-2 border-black
