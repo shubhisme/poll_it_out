@@ -8,10 +8,6 @@ export async function POST(req: NextRequest) {
         const body = await req.json();
         const {pollid, options_id , clerk_id} = body;
 
-        const io = new Server(3001, {
-            cors: { origin: "*" }
-        });
-
         const user = await User.findOne({clerk_id : clerk_id});
         const user_id = user?._id;
         if(!user_id){
@@ -93,6 +89,44 @@ export async function POST(req: NextRequest) {
         });
 
         await Promise.all(updatePromises);
+
+        const updatedPoll = await Poll.findById(pollid);
+        
+        if (!updatedPoll) {
+            return NextResponse.json({error: "Poll not found after update"}, {status: 404});
+        }
+
+        const totalVotes = updatedPoll.options.reduce((sum: number, opt: any) => sum + (opt.votes_count || 0), 0);
+
+        const updated_data = updatedPoll.options.map((opt: any) => {
+            const voteCount = opt.votes_count || 0;
+            return {
+                text: opt.text,
+                vote_count: voteCount,
+                percentage: totalVotes > 0 ? (voteCount / totalVotes) * 100 : 0
+            };
+        });
+
+        console.log({upd_data: updated_data, totalVotes});
+
+        try{
+
+            await fetch("http://localhost:4000/notify-update" , {
+                method: "POST",
+                headers : {
+                    "Content-Type" : "application/json"
+                },
+
+                body : JSON.stringify({pollid : pollid , data : updated_data})
+            })
+
+        }catch(err){
+            console.error("Socket connection error : ",err);
+        }
+
+        // if (global.io) {
+        //     global.io.to(pollid).emit("update_poll", updated_data);
+        // }
 
         return NextResponse.json({
             success: true,

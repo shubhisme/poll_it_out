@@ -36,11 +36,20 @@ const votesSchema = new mongoose.Schema({
     voted_at: {type: Date , default: Date.now}
 } , {timestamps: true})
 
+const ChatMessage = new mongoose.Schema({
+    poll_id : {type : mongoose.Schema.Types.ObjectId , ref: "Poll" , required : true},
+    user_id : {type: mongoose.Schema.Types.ObjectId , ref : "User" , required : true},
+    message : {type : String , required: true},
+
+} , {timestamps: true})
+
+ChatMessage.index({poll_id : 1});
 votesSchema.index({poll_id : 1});
 votesSchema.index({poll_id : 1 , user_id : 1 ,option_id : 1 } , {unique: true})
 
 const User = models.User || mongoose.model("User", userSchema, "User")
 const Poll = models.Poll || mongoose.model("Poll", pollSchema, "Poll")
 const Vote = models.Vote || mongoose.model("Vote", votesSchema, "Vote")
+const Chat = models.Chat || mongoose.model("Chat" , ChatMessage , "Chat")
 
-export { User, Poll, Vote }
+export { User, Poll, Vote , Chat}

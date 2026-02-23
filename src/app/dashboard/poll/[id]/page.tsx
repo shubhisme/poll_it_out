@@ -7,6 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Label } from "@/components/ui/label"
 import Poll_timer from '../../_components/Poll_timer';
 import { useAuth } from '@clerk/nextjs';
+import { useRouter } from "next/navigation";
 
 const Page = () => {
     const [poll_data, setPollData] = useState<any>();
@@ -15,7 +16,18 @@ const Page = () => {
     const [err, setError] = useState("");
     const [isPollExpired, setIsPollExpired] = useState(false);
     const { id } = useParams();
-    const {userId} = useAuth();
+    const {userId , isLoaded} = useAuth();
+    const [hasVoted , setHasVoted] = useState(true);
+
+    const router = useRouter();
+
+    useEffect(()=>{
+        if(!isLoaded){return ;}
+
+        if(!userId){
+            router.push("/signin");
+        }
+    } , [isLoaded , userId , router]);
 
     const isPoll = useCallback(
         async () => {
@@ -29,11 +41,12 @@ const Page = () => {
                 })
 
                 const res = await poll_data_api.json();
-                console.log({ response: res.data });
+                // console.log({ response: res.data });
 
                 setPollData(res?.data);
+
             } catch (err: any) {
-                setError(err?.error || "Failed to load poll");
+                setError(err?.details || "Failed to load poll");
                 console.log(err?.error);
             }
 
@@ -60,12 +73,6 @@ const Page = () => {
         const selections = poll_data?.multi_true ? selectedOptions : [selectedOption];
         console.log("Submitted selections:", selections);
 
-        // if(Array.isArray(selections)){
-        //     selections.map(s =>{
-                
-        //     })
-        // } 
-
         const vote_api_data = {
             pollid : id,
             options_id : selections,
@@ -84,12 +91,18 @@ const Page = () => {
                 body : JSON.stringify(vote_api_data)
             })
 
-            const data = (await vote_api).json()
+            const data = await vote_api.json()
             console.log({data});
 
+            if(data?.satus !== 200){
+                setError(data?.error);
+            }else{
+                setHasVoted(true);
+            }
+
         }catch(err){
-            err?.details ? setError(err?.details  || "Failed to vote") : setError("Failed to vote");
-            console.log({err});
+            err?.data?.error ? setError(err?.data?.error  || "Failed to vote") : setError("Failed to vote");
+            console.log({error: err});
         }
 
     }, [id, poll_data, selectedOptions, selectedOption, userId]);
@@ -212,32 +225,58 @@ const Page = () => {
                         </div>
 
                         {/* Submit Button */}
-                        <div className="flex justify-center pt-4">
-                            <Button
-                                type="submit"
-                                size="lg"
-                                disabled={(poll_data?.expires_at && isPollExpired) || (poll_data?.multi_true ? selectedOptions.length === 0 : !selectedOption)}
-                                className="
-                                    px-12 py-6 text-xl font-bold
-                                    bg-white text-black border-2 border-black
-                                    shadow-[6px_6px_0px_black]
-                                    hover:translate-x-1 hover:translate-y-1
-                                    hover:shadow-[6px_6px_0px_black]
-                                    active:translate-x-2 active:translate-y-2
-                                    active:shadow-none
-                                    disabled:opacity-50 disabled:cursor-not-allowed
-                                    disabled:hover:translate-x-0 disabled:hover:translate-y-0
-                                    disabled:hover:shadow-[6px_6px_0px_black]
-                                    transition-all
-                                "
-                            >
-                                Submit Vote
-                            </Button>
-                        </div>
-
                         {err && (
-                            <p className="text-center text-red-500 font-medium">{err}</p>
+                            <p className="text-center text-red-500 font-semibold">{err}</p>
                         )}
+                        <div className="flex justify-center gap-4">
+                            <div className={`flex justify-center pt-4 ${err ? "mt-2" : ""}`}>
+                                <Button
+                                    type="submit"
+                                    size="lg"
+                                    disabled={(poll_data?.expires_at && isPollExpired) || (poll_data?.multi_true ? selectedOptions.length === 0 : !selectedOption)}
+                                    className="
+                                        px-12 py-6 text-xl font-bold
+                                        bg-white text-black border-2 border-black
+                                        shadow-[6px_6px_0px_black]
+                                        hover:translate-x-1 hover:translate-y-1
+                                        hover:shadow-[6px_6px_0px_black]
+                                        active:translate-x-2 active:translate-y-2
+                                        active:shadow-none
+                                        disabled:opacity-50 disabled:cursor-not-allowed
+                                        disabled:hover:translate-x-0 disabled:hover:translate-y-0
+                                        disabled:hover:shadow-[6px_6px_0px_black]
+                                        transition-all
+                                        "
+                                        >
+                                    Submit Vote
+                                </Button>
+                            </div>
+
+                            <div className={`flex justify-center pt-4 ${err ? "mt-2" : ""}`}>
+                                <Button
+                                    type="button"
+                                    size="lg"
+                                    // disabled={!hasVoted}
+                                    hidden={!hasVoted}
+                                    onClick= {()=> router.push(`/dashboard/poll/${id}/view`)}
+                                    className="
+                                        px-12 py-6 text-xl font-bold
+                                        bg-white text-black border-2 border-black
+                                        shadow-[6px_6px_0px_black]
+                                        hover:translate-x-1 hover:translate-y-1
+                                        hover:shadow-[6px_6px_0px_black]
+                                        active:translate-x-2 active:translate-y-2
+                                        active:shadow-none
+                                        disabled:opacity-50 disabled:cursor-not-allowed
+                                        disabled:hover:translate-x-0 disabled:hover:translate-y-0
+                                        disabled:hover:shadow-[6px_6px_0px_black]
+                                        transition-all
+                                        "
+                                        >
+                                    View Results
+                                </Button>
+                            </div>
+                        </div>
                     </form>
                 </div>
             </div>
