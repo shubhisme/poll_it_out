@@ -4,10 +4,11 @@ import { useParams } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button';
 import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
 import Poll_timer from '../../_components/Poll_timer';
+import Navbar from '@/app/components/Navbar';
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from "next/navigation";
+import { Copy, Check, ChevronRight } from 'lucide-react';
 
 const Page = () => {
     const [poll_data, setPollData] = useState<any>();
@@ -18,6 +19,7 @@ const Page = () => {
     const { id } = useParams();
     const {userId , isLoaded} = useAuth();
     const [hasVoted , setHasVoted] = useState(true);
+    const [copied, setCopied] = useState(false);
 
     const router = useRouter();
 
@@ -37,11 +39,10 @@ const Page = () => {
                     headers: {
                         "Content-Type": "application/json"
                     },
-                    body: JSON.stringify({ pollid: id })
+                    body: JSON.stringify({ pollid: id , user_id: userId })
                 })
 
                 const res = await poll_data_api.json();
-                // console.log({ response: res.data });
 
                 setPollData(res?.data);
 
@@ -50,12 +51,12 @@ const Page = () => {
                 console.log(err?.error);
             }
 
-        }, [id]
+        }, [id, userId]
     );
 
     useEffect(() => {
         isPoll();
-    }, [id]);
+    }, [id, userId]);
 
     const handleCheckboxChange = (optionId: string) => {
         setSelectedOptions(prev => {
@@ -66,6 +67,14 @@ const Page = () => {
             console.log({selectedOptions : newSelections});
             return newSelections;
         });
+    };
+
+    const handleCopyCode = () => {
+        if (poll_data?.share_code) {
+            navigator.clipboard.writeText(poll_data.share_code);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
     };
 
     const handleSubmit = useCallback(async (e: React.FormEvent) => {
@@ -101,7 +110,7 @@ const Page = () => {
             }
 
         }catch(err){
-            err?.data?.error ? setError(err?.data?.error  || "Failed to vote") : setError("Failed to vote");
+            err?.error ? setError(err?.data?.error  || "Failed to vote") : setError("Failed to vote");
             console.log({error: err});
         }
 
@@ -109,175 +118,222 @@ const Page = () => {
 
     if (!poll_data) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
-                <p className="text-lg">Loading poll...</p>
+            <div className="min-h-screen flex flex-col">
+                <Navbar />
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-3">
+                        <div className="w-8 h-8 border-2 border-black border-t-transparent animate-spin" />
+                        <p className="text-lg font-semibold">Loading poll...</p>
+                    </div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-background relative">
-            {/* Timer in top right */}
-            <div className="absolute top-6 right-6 z-10">
-                <div className="bg-white border-2 border-black px-4 py-2 shadow-[4px_4px_0px_black]">
-                    <Poll_timer exp_at={poll_data?.expires_at} onExpire={() => setIsPollExpired(true)} />
-                </div>
-            </div>
+        <div className="min-h-screen flex flex-col bg-white">
+            <Navbar />
 
-            {/* Main content centered */}
-            <div className="flex-1 flex items-center justify-center px-8 py-12">
-                <div className="w-full max-w-3xl">
-                    <form onSubmit={handleSubmit} className="space-y-8">
-                        {/* Question and Description */}
-                        <div className="space-y-4">
-                            <h1 className="text-4xl font-bold text-foreground">
+            <div className="flex-1 flex flex-col lg:flex-row">
+                {/* Left: Poll content */}
+                <div className="flex-1 flex flex-col justify-center px-5 sm:px-8 md:px-12 lg:px-16 py-8 lg:py-12">
+                    <div className="w-full max-w-2xl mx-auto lg:mx-0">
+                        {/* Header section */}
+                        <div className="space-y-3 mb-8">
+                            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-black leading-tight">
                                 {poll_data?.question}
                             </h1>
                             {poll_data?.description && (
-                                <p className="text-lg text-muted-foreground">
+                                <p className="text-base sm:text-lg text-gray-500">
                                     {poll_data.description}
                                 </p>
                             )}
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <span>Poll Code: {poll_data?.share_code}</span>
+
+                            {/* Poll meta badges */}
+                            <div className="flex flex-wrap items-center gap-2 pt-1">
+                                <button
+                                    onClick={handleCopyCode}
+                                    className="inline-flex items-center gap-1.5 border-2 border-black px-3 py-1 text-sm font-semibold bg-white hover:bg-gray-50 transition-colors cursor-pointer"
+                                >
+                                    <span>Code: {poll_data?.share_code}</span>
+                                    {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                                </button>
+
                                 {poll_data?.multi_true && (
-                                    <>
-                                        <span>•</span>
-                                        <span className="font-medium">Multiple selections allowed</span>
-                                    </>
+                                    <span className="inline-flex items-center border-2 border-black bg-black text-white px-3 py-1 text-sm font-semibold">
+                                        Multi-select
+                                    </span>
                                 )}
                             </div>
                         </div>
 
                         {/* Options */}
-                        <div className="space-y-3">
-                            {poll_data?.multi_true ? (
-                                // Multiple selection mode
-                                poll_data?.options?.map((option: any) => (
-                                    <div
-                                        key={option._id}
-                                        className="group"
-                                    >
-                                        <div className={`
-                                            flex items-center space-x-4 p-5 border-2 border-black
-                                            transition-all
-                                            hover:translate-x-1 hover:translate-y-1
-                                            ${selectedOptions.includes(option._id)
-                                                ? 'bg-white text-black shadow-none'
-                                                : 'bg-white shadow-[4px_4px_0px_black] hover:shadow-[2px_2px_0px_black]'
-                                            }
-                                        `}
+                        <form onSubmit={handleSubmit}>
+                            <div className="space-y-3">
+                                {poll_data?.multi_true ? (
+                                    poll_data?.options?.map((option: any, idx: number) => (
+                                        <label
+                                            key={option._id}
+                                            htmlFor={option._id}
+                                            className={`
+                                                group flex items-center gap-4 p-4 sm:p-5 border-2 border-black cursor-pointer
+                                                transition-all duration-150
+                                                ${selectedOptions.includes(option._id)
+                                                    ? 'bg-black text-white translate-x-1 translate-y-1 shadow-none'
+                                                    : 'bg-white text-black shadow-[4px_4px_0px_black] hover:shadow-[2px_2px_0px_black] hover:translate-x-[2px] hover:translate-y-[2px]'
+                                                }
+                                            `}
                                         >
+                                            <span className={`
+                                                flex-shrink-0 w-7 h-7 flex items-center justify-center border-2 text-xs font-bold
+                                                ${selectedOptions.includes(option._id)
+                                                    ? 'border-white text-white'
+                                                    : 'border-black text-black'
+                                                }
+                                            `}>
+                                                {String.fromCharCode(65 + idx)}
+                                            </span>
                                             <Checkbox
                                                 id={option._id}
                                                 checked={selectedOptions.includes(option._id)}
                                                 onCheckedChange={() => handleCheckboxChange(option._id)}
-                                                className="border-2 data-[state=checked]:bg-white data-[state=checked]:text-black"
+                                                className="hidden"
                                             />
-                                            <Label
-                                                htmlFor={option._id}
-                                                className="flex-1 text-lg cursor-pointer font-medium"
-                                            >
+                                            <span className="flex-1 text-base sm:text-lg font-medium">
                                                 {option.text}
-                                            </Label>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : (
-                                // Single selection mode with checkbox (toggleable)
-                                poll_data?.options?.map((option: any) => (
-                                    <div
-                                        key={option._id}
-                                        className="group"
-                                    >
-                                        <div className={`
-                                            flex items-center space-x-4 p-5 border-2 border-black
-                                            transition-all
-                                            hover:translate-x-1 hover:translate-y-1
-                                            ${selectedOption === option._id
-                                                ? 'bg-white text-black shadow-none'
-                                                : 'bg-white shadow-[4px_4px_0px_black] hover:shadow-[2px_2px_0px_black]'
-                                            }
-                                        `}
+                                            </span>
+                                            <ChevronRight className={`w-5 h-5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${selectedOptions.includes(option._id) ? 'opacity-100' : ''}`} />
+                                        </label>
+                                    ))
+                                ) : (
+                                    poll_data?.options?.map((option: any, idx: number) => (
+                                        <label
+                                            key={option._id}
+                                            htmlFor={option._id}
+                                            className={`
+                                                group flex items-center gap-4 p-4 sm:p-5 border-2 border-black cursor-pointer
+                                                transition-all duration-150
+                                                ${selectedOption === option._id
+                                                    ? 'bg-black text-white translate-x-1 translate-y-1 shadow-none'
+                                                    : 'bg-white text-black shadow-[4px_4px_0px_black] hover:shadow-[2px_2px_0px_black] hover:translate-x-[2px] hover:translate-y-[2px]'
+                                                }
+                                            `}
                                         >
+                                            <span className={`
+                                                flex-shrink-0 w-7 h-7 flex items-center justify-center border-2 text-xs font-bold
+                                                ${selectedOption === option._id
+                                                    ? 'border-white text-white'
+                                                    : 'border-black text-black'
+                                                }
+                                            `}>
+                                                {String.fromCharCode(65 + idx)}
+                                            </span>
                                             <Checkbox
                                                 id={option._id}
                                                 checked={selectedOption === option._id}
                                                 onCheckedChange={(checked) => {
-                                                    // Toggle behavior: if already selected, deselect; otherwise select this one
                                                     const newval = checked ? option._id : "";
                                                     setSelectedOption(newval);
-
                                                     console.log({options : newval})
                                                 }}
-                                                className="border-2 data-[state=checked]:bg-white data-[state=checked]:text-black"
+                                                className="hidden"
                                             />
-                                            <Label
-                                                htmlFor={option._id}
-                                                className="flex-1 text-lg cursor-pointer font-medium"
-                                            >
+                                            <span className="flex-1 text-base sm:text-lg font-medium">
                                                 {option.text}
-                                            </Label>
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
+                                            </span>
+                                            <ChevronRight className={`w-5 h-5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${selectedOption === option._id ? 'opacity-100' : ''}`} />
+                                        </label>
+                                    ))
+                                )}
+                            </div>
 
-                        {/* Submit Button */}
-                        {err && (
-                            <p className="text-center text-red-500 font-semibold">{err}</p>
-                        )}
-                        <div className="flex justify-center gap-4">
-                            <div className={`flex justify-center pt-4 ${err ? "mt-2" : ""}`}>
+                            {/* Error */}
+                            {err && (
+                                <div className="mt-4 border-2 border-red-500 bg-red-50 px-4 py-2">
+                                    <p className="text-red-600 font-semibold text-sm">{err}</p>
+                                </div>
+                            )}
+
+                            {/* Buttons */}
+                            <div className="flex flex-wrap gap-3 mt-8">
                                 <Button
                                     type="submit"
                                     size="lg"
                                     disabled={(poll_data?.expires_at && isPollExpired) || (poll_data?.multi_true ? selectedOptions.length === 0 : !selectedOption)}
                                     className="
-                                        px-12 py-6 text-xl font-bold
-                                        bg-white text-black border-2 border-black
-                                        shadow-[6px_6px_0px_black]
-                                        hover:translate-x-1 hover:translate-y-1
-                                        hover:shadow-[6px_6px_0px_black]
-                                        active:translate-x-2 active:translate-y-2
-                                        active:shadow-none
-                                        disabled:opacity-50 disabled:cursor-not-allowed
-                                        disabled:hover:translate-x-0 disabled:hover:translate-y-0
-                                        disabled:hover:shadow-[6px_6px_0px_black]
+                                        px-8 sm:px-12 py-5 sm:py-6 text-base sm:text-lg font-bold
+                                        bg-black text-white border-2 border-black
+                                        shadow-[4px_4px_0px_gray]
+                                        hover:translate-y-[2px] hover:shadow-[2px_2px_0px_gray]
+                                        active:translate-y-[4px] active:shadow-none
+                                        disabled:opacity-40 disabled:cursor-not-allowed
+                                        disabled:hover:translate-y-0 disabled:hover:shadow-[4px_4px_0px_gray]
                                         transition-all
-                                        "
-                                        >
+                                    "
+                                >
                                     Submit Vote
                                 </Button>
-                            </div>
 
-                            <div className={`flex justify-center pt-4 ${err ? "mt-2" : ""}`}>
-                                <Button
-                                    type="button"
-                                    size="lg"
-                                    // disabled={!hasVoted}
-                                    hidden={!hasVoted}
-                                    onClick= {()=> router.push(`/dashboard/poll/${id}/view`)}
-                                    className="
-                                        px-12 py-6 text-xl font-bold
-                                        bg-white text-black border-2 border-black
-                                        shadow-[6px_6px_0px_black]
-                                        hover:translate-x-1 hover:translate-y-1
-                                        hover:shadow-[6px_6px_0px_black]
-                                        active:translate-x-2 active:translate-y-2
-                                        active:shadow-none
-                                        disabled:opacity-50 disabled:cursor-not-allowed
-                                        disabled:hover:translate-x-0 disabled:hover:translate-y-0
-                                        disabled:hover:shadow-[6px_6px_0px_black]
-                                        transition-all
+                                {hasVoted && (
+                                    <Button
+                                        type="button"
+                                        size="lg"
+                                        onClick={() => router.push(`/dashboard/poll/${id}/view`)}
+                                        className="
+                                            px-8 sm:px-12 py-5 sm:py-6 text-base sm:text-lg font-bold
+                                            bg-white text-black border-2 border-black
+                                            shadow-[4px_4px_0px_gray]
+                                            hover:translate-y-[2px] hover:shadow-[2px_2px_0px_gray]
+                                            active:translate-y-[4px] active:shadow-none
+                                            transition-all
                                         "
-                                        >
-                                    View Results
-                                </Button>
+                                    >
+                                        View Results
+                                    </Button>
+                                )}
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                {/* Right: Timer sidebar */}
+                <div className="lg:w-72 xl:w-80 border-t-2 lg:border-t-0 lg:border-l-2 border-black bg-gray-50 p-5 sm:p-6 lg:p-8">
+                    <div className="lg:sticky lg:top-24 space-y-6">
+                        {/* Timer card */}
+                        <div className="border-2 border-black bg-white p-4 shadow-[4px_4px_0px_black]">
+                            <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Time Remaining</p>
+                            <div className="text-2xl font-bold">
+                                <Poll_timer exp_at={poll_data?.expires_at} onExpire={() => setIsPollExpired(true)} />
                             </div>
                         </div>
-                    </form>
+
+                        {/* Poll info card */}
+                        <div className="border-2 border-black bg-white p-4 shadow-[4px_4px_0px_black]">
+                            <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-3">Poll Info</p>
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Options</span>
+                                    <span className="font-bold">{poll_data?.options?.length ?? 0}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Type</span>
+                                    <span className="font-bold">{poll_data?.multi_true ? 'Multi-select' : 'Single'}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Code</span>
+                                    <span className="font-bold">{poll_data?.share_code}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Expired overlay */}
+                        {isPollExpired && poll_data?.expires_at && (
+                            <div className="border-2 border-red-500 bg-red-50 p-4">
+                                <p className="font-bold text-red-600 text-sm">This poll has expired.</p>
+                                <p className="text-red-500 text-xs mt-1">You can still view results.</p>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

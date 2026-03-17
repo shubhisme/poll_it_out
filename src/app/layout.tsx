@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Courier_Prime, Roboto_Mono } from "next/font/google"; 
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { Toaster } from "@/components/ui/sonner";
 
 const courierPrime = Courier_Prime({
   variable: "--font-courier-prime",
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${courierPrime.variable} ${robotoMono.variable} antialiased lekton-regular `}>
         <ClerkProvider>
           {children}
+          <Toaster />
         </ClerkProvider>
       </body>
     </html>

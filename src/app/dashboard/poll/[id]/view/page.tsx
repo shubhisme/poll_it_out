@@ -3,14 +3,14 @@
 import { useParams } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react'
 import Navbar from '@/app/components/Navbar';
-import { Bar, BarChart, Tooltip, XAxis, YAxis } from "recharts"
+import { Bar, BarChart, XAxis, YAxis , Pie, PieChart, Cell } from "recharts"
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card"
 import {
   ChartConfig,
@@ -19,17 +19,22 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { useAuth } from '@clerk/nextjs';
-import {} from "@/app/global";
-import { CheckLine , UserRoundCheck, QrCode, X , CircleQuestionMark } from 'lucide-react';
+import { CheckLine , UserRoundCheck, QrCode, X , CircleQuestionMark , ChartBar, ChartPie } from 'lucide-react';
 import { Socket } from 'socket.io-client';
 import { getSocket , disconnectSocket } from '@/lib/socket';
 import Image from 'next/image';
 import { Button } from "@/components/ui/button"
 import { ToolTip} from '@/app/dashboard/_components/Tooltip';
-import { Drawer_Right } from '@/app/dashboard/_components/Drawer_Right';
 import { ChatSection } from '@/app/dashboard/_components/ChatSection';
-import "@/app/globals.css";
-
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface ChartDataItem {
   option_text: string;
@@ -46,6 +51,12 @@ interface PollData {
   options: PollOption[];
 }
 
+interface SocketPollUpdateItem {
+    text: string;
+    vote_count: number;
+    percentage: number;
+}
+
 const chartConfig = {
   vote_count: {
     label: "Votes",
@@ -54,7 +65,7 @@ const chartConfig = {
 } satisfies ChartConfig
 
 const Page = () => {
-    const [poll_data , setPollData] = useState<PollData | null>(null);
+    const [, setPollData] = useState<PollData | null>(null);
     const [chartData, setChartData] = useState<ChartDataItem[]>([]);
     const [question , setQuestion] = useState("");
     const [description , setDescription] = useState("");
@@ -63,16 +74,17 @@ const Page = () => {
     const [totalVotes , setTotalVotes] = useState(0);
     const [socket , setSocket] = useState<Socket | null>(null);
     const [pollId , setPollId] = useState<string | null>(null);
-    const [liveCount , setLiveCount] = useState<Number> (0);
+    const [liveCount , setLiveCount] = useState<number> (0);
+    const [user_id , setUser_id] = useState<string | null>(null);
+    const [userName , setUserName] = useState<string | null>(null);
+    const [chartType , setChartType] = useState<"bar" | "pie">("bar");
+    const [multiTrue , setMultiTrue] = useState(false);
 
     const [totalVoters , setTotalVoters] = useState(0);
     const [showQR, setShowQR] = useState(false);
 
-    const {userId} = useAuth()
-
-    const [error , setError] = useState("error: ");
+    const {userId , isLoaded} = useAuth()
     const { id } = useParams();
-
 
     const getVoters = useCallback(
         async ()=>{
@@ -87,10 +99,10 @@ const Page = () => {
 
                 const res = await users.json();
 
+                console.log(`Total voters: ${res?.data}`);
                 setTotalVoters(res?.data);
-            }catch(err: any){
-                setError(err?.error);
-                console.log(err?.error);
+            }catch(err: unknown){
+                console.log(err);
             }
         } , [id]
     )
@@ -103,7 +115,7 @@ const Page = () => {
                 headers : {
                     "Content-Type": "application/json"
                 },
-                body : JSON.stringify({pollid : id})
+                body : JSON.stringify({pollid : id , user_id : userId})
             })
 
             const res = await poll_data.json();
@@ -113,6 +125,9 @@ const Page = () => {
 
             if(res?.status === 200){
                 setPollId(res?.data?._id);
+                setUser_id(res?.data?.created_by);
+                setUserName(res?.userName);
+                console.log({user_id : res?.data?.created_by})
 
                 if(res?.data?.multi_true){
                     getVoters();
@@ -124,42 +139,37 @@ const Page = () => {
                     setImage_link(res?.data?.qr);
                 }
 
-                let totalV = res?.data?.options.map((option: any)=>{
-                    const vote = option.votes_count;
-                    
-                    setTotalVotes(prev => prev + vote);
-
-                    return vote + totalVotes;
-                })
-
-                totalV = totalV.reduce((acc : number, vote : number)=> vote +acc , 0 )
+                const totalV = res?.data?.options?.reduce((acc: number, option: { votes_count: number }) => {
+                    return acc + option.votes_count;
+                }, 0) ?? 0;
+                
+                setTotalVotes(totalV);
                 console.log({total_votes : totalV})
 
-                const newChartData: ChartDataItem[] = res?.data?.options.map((option: any) => ({
+                const newChartData: ChartDataItem[] = res?.data?.options.map((option: { text: string; votes_count: number }) => ({
                     option_text: option.text,
                     vote_count: option.votes_count,
-                    percentage: option.votes_count / totalV * 100
+                    percentage: totalV > 0 ? (option.votes_count / totalV) * 100 : 0
                 })) || [];
                 
                 setChartData(newChartData);
                 setQuestion(res?.data?.question);
+                setMultiTrue(res?.data?.multi_true);
                 setDescription(res?.data?.description);
 
                 // console.log({chartdata : newChartData});
             }
 
-
-        }catch(err: any){
-            setError(err?.error);
-            console.log(err?.error);
+        }catch(err: unknown){
+            console.log(err);
         }
 
-        } , [id] 
+        } , [id, getVoters , userId] 
     );
 
     useEffect(() => {
         isPoll();
-    }, [id]);
+    }, [isPoll]);
 
     useEffect(()=>{
         if(!userId){return;}
@@ -173,7 +183,7 @@ const Page = () => {
             setSocket(null);
         }
 
-    } , [userId])
+    } , [userId , pollId])
 
     // joining rooms
     useEffect(()=>{
@@ -183,7 +193,7 @@ const Page = () => {
 
         socket.emit("join_poll" , pollId);
 
-        socket.on("update_poll" , (data : any[])=>{
+        socket.on("update_poll" , (data : SocketPollUpdateItem[])=>{
             console.log("Poll updated via socket:", data);
             
             const updatedChartData: ChartDataItem[] = data.map((item) => ({
@@ -200,185 +210,213 @@ const Page = () => {
 
     } , [socket , pollId , userId])
 
-    useEffect(()=> {
-        if(!pollId) return;
-
-        const getVoters = async()=>{
-            try{
-                const res = await fetch(`/api/poll/get_live_count` , {
-                    method : "POST",
-                    headers : {
-                        "Content-Type": "application/json"
-                    },
-                    body : JSON.stringify({pollid : pollId})
-                })
-
-                if (res.status !== 200) {
-                    throw new Error("Failed to fetch live count");
-                }
-
-                const data = await res.json();
-                // console.log({live_count_data : data});
-                setLiveCount(data?.count);
-
-            }catch(err : any){
-                // setError(err ?? err?.error);
-                console.log(err);
-            }
-        }
-
-        getVoters();
-
-        const interval = setInterval(getVoters , 5000);
-        return ()=> clearInterval(interval);
-        
-    } , [pollId])
-
+        // listening to live count
     useEffect(()=>{
-        try{
-            const refresh = async()=>{
-                const res = await fetch(`/api/poll/refresh_presence` , {
-                    method : "POST",
-                    headers : {
-                        "Content-Type": "application/json"
-                    },
-                    body : JSON.stringify({pollid : pollId , user_id : userId})
-                })
 
-                const data = await res.json();
-                // console.log(data);
-            }
-            refresh();
-
-            const interval = setInterval(refresh , 10000);
-
-            return ()=> clearInterval(interval);
-        }catch(err: any){
-            setError(err?.error);
-            console.log(err?.error);
+        if(!socket || !pollId){
+            return;
         }
 
-    } , [pollId , userId])
+
+        socket.on("total_joined" , (count : number)=>{
+            setLiveCount(count);
+        })
+
+    } , [socket , pollId , userId])
+
+    const chart = chartType === "bar" ? (
+        <BarChart
+            accessibilityLayer
+            data={chartData.length > 0 ? chartData : []}
+            layout="vertical"
+            margin={{
+                left: 20,
+                right: 20,
+                top: 10,
+                bottom: 10,
+            }}
+        >
+            <YAxis
+                dataKey="option_text"
+                type="category"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                width={100}
+                style={{ fontSize: '0.875rem' }}
+            />
+
+            <XAxis dataKey="vote_count" type="number" hide />
+
+            <ChartTooltip
+                cursor={false}
+                content={
+                    <ChartTooltipContent 
+                        hideLabel 
+                        indicator='line'
+                        formatter={(value) => {
+                            const voteValue = typeof value === 'number' ? value : Number(value);
+                            const percentage = totalVotes > 0 ? (voteValue / totalVotes) * 100 : 0;
+                            return (
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-muted-foreground">Votes:</span>
+                                        <span className="font-mono font-medium">{voteValue}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-muted-foreground">Percentage:</span>
+                                        <span className="font-mono font-medium">{percentage.toFixed(1)}%</span>
+                                    </div>
+                                </div>
+                            );
+                        }}
+                    />
+                }
+            />
+
+            <Bar className='p-0' barSize={10} dataKey="vote_count" layout="vertical" radius={2} />
+        </BarChart> ) : (
+        <PieChart className='mb-0'>
+            <ChartTooltip
+            cursor={false}
+            content={<ChartTooltipContent hideLabel
+                                        indicator='line'
+                        formatter={(value) => {
+                            const voteValue = typeof value === 'number' ? value : Number(value);
+                            const percentage = totalVotes > 0 ? (voteValue / totalVotes) * 100 : 0;
+                            return (
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-muted-foreground">Votes:</span>
+                                        <span className="font-mono font-medium">{voteValue}</span>
+                                    </div>
+                                    <div className="flex justify-between gap-4">
+                                        <span className="text-muted-foreground">Percentage:</span>
+                                        <span className="font-mono font-medium">{percentage.toFixed(1)}%</span>
+                                    </div>
+                                </div>
+                            );
+                        }} />}
+            />
+            <Pie data={chartData}
+            dataKey="vote_count"
+            nameKey="option_text"
+            >
+              {chartData.map((_, index) => {
+                const lightness = Math.round((index / Math.max(chartData.length - 1, 1)) * 60);
+                return <Cell key={`cell-${index}`} fill={`hsl(0, 0%, ${lightness}%)`} />;
+              })}
+            </Pie>
+        </PieChart>
+    )
 
   return (
     <>        
         <Navbar />
 
         <div className='flex mx-auto w-[90%] flex-col gap-4 mt-3'>
-            <div className='flex justify-between items-center'>
-                <p>Joinig Code : <span className='text-lg px-2 font-bold bg-black text-white'>{join_code}</span></p>
+            <div className='flex flex-wrap justify-between items-center gap-3'>
+                <p>Joining Code : <span className='text-lg px-2 font-bold bg-black text-white'>{join_code}</span></p>
                 
                 <div className='flex flex-row space-x-0.5'>
                     <button 
                         onClick={() => setShowQR(true)}
-                        className="flex items-center gap-2 px-2 py-2 bg-black hover:bg-gray-800  rounded-lg cursor-pointer text-white transition-all"
+                        className="flex items-center gap-2 px-3 py-1.5 bg-black hover:bg-gray-800 cursor-pointer text-white transition-all border-2 border-black shadow-[2px_2px_0px_gray] active:translate-y-[2px] active:shadow-none"
                         >
                         <QrCode className="w-5 h-5" />
                         <span className="font-medium">QR Code</span>
                     </button>
-                    <ToolTip content = "Scan QR Code to vote in the poll" children= {
+                    <ToolTip content = "Scan QR Code to vote in the poll">
                         <Button className="bg-transparent hover:bg-transparent cursor-pointer text-black border-none shadow-none">
                             <CircleQuestionMark width={20} height={20} />
                         </Button>
-                    } />
+                    </ToolTip>
                 </div>
 
                 <div className='flex flex-row items-center space-x-2'>
-                    <ToolTip content='Live count of people active on this poll' children={
+                    <ToolTip content='Live count of people active on this poll'>
                         <div className="live-indicator">
                             <span className="live-dot"></span>
-                            <span className="live-text">Live Count 1</span>
+                            <span className="live-text">Live Count {liveCount}</span>
                         </div>
-                    }  />
+                    </ToolTip>
                 </div>
 
             </div>
             
-            <div className='flex flex-row space-x-20 '>
-                <Card className='w-[90%] h-[80%] m-0 flex justigy-left shadow-none border-none p-0 '>
-                <CardHeader className='flex flex-col gap-4 p-0'>
-                    <div className='flex flex-row items-start justify-between'>
-                        <div className='flex flex-col gap-2'>
-                            <CardTitle className='font-bold text-2xl'>{question}</CardTitle>
-                            <CardDescription>{description}</CardDescription>
+            <div className='flex flex-col lg:flex-row gap-6 lg:h-[35rem]'>
+
+                <div className='flex-1 border-2 border-black bg-white shadow-[4px_4px_0px_black] p-5 sm:p-6 flex flex-col h-full lg:h-auto mb-0'>
+                    <Card className='w-full m-0 flex flex-col shadow-none border-none p-0 bg-transparent h-full'>
+                    <CardHeader className='flex flex-col gap-4 p-0 w-full flex-shrink-0'>
+                        <div className='flex flex-col justify-between sm:flex-row items-start w-full gap-3'>
+                            <div className='flex items-start gap-2 text-sm px-2 py-1 flex-shrink-0'>
+                                <div className='flex flex-col gap-2'>
+                                    <CardTitle className='font-bold text-2xl'>{question}</CardTitle>
+                                    <CardDescription>{description}</CardDescription>
+                                </div>
+                            </div>
+                            <div>
+                            <Select
+                                value={chartType}
+                                onValueChange={(val) => setChartType(val as "bar" | "pie")}
+                            >
+                                <SelectTrigger className="w-[160px] border-2 border-black rounded-none bg-white font-bold shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] transition-all cursor-pointer">
+                                <SelectValue placeholder="Select chart" />
+                                </SelectTrigger>
+
+                                <SelectContent className="border-2 border-black rounded-none bg-white shadow-[4px_4px_0px_black]">
+                                <SelectGroup>
+                                    <SelectItem value="bar" className="rounded-none font-medium cursor-pointer focus:bg-black focus:text-white">
+                                    <p className="flex items-center gap-2">
+                                        <ChartBar className="w-4 h-4" />
+                                        <span>Bar Chart</span>
+                                    </p>
+                                    </SelectItem>
+
+                                    <SelectItem value="pie" className="rounded-none font-medium cursor-pointer focus:bg-black focus:text-white">
+                                    <p className="flex items-center gap-2">
+                                        <ChartPie className="w-4 h-4" />
+                                        <span>Pie Chart</span>
+                                    </p>
+                                    </SelectItem>
+                                </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                            </div>
                         </div>
 
-                        <div className='flex items-center gap-2'>
-                            <div className='flex items-center gap-2 h-full'>
-                                <CheckLine className='w-8 h-8' />
-                                <span className='font-semibold text-lg'>{totalVotes}</span>
+                    </CardHeader>
+                    <CardContent className='p-0 mt-0 flex-1 overflow-y-auto'>
+                        <ChartContainer config={chartConfig} className='p-0 mt-0'>
+                            {chart}
+                        </ChartContainer>
+                        <CardFooter>
+                            <div className='flex items-center justify-between w-full flex-shrink-0'>
+                                <div className='flex items-center gap-1.5 border-2 border-black px-3 py-1'>
+                                    <p>Total Votes: </p>
+                                    <span className='font-bold text-lg'>{totalVotes}</span>
+                                </div>
+
+                                {multiTrue && (
+                                    <div className='flex items-center gap-1.5 border-2 border-black px-3 py-1'>
+                                        <p>Total Voters: </p>
+                                        <span className='font-bold text-lg'>{totalVoters}</span>
+                                    </div>
+                                )}
                             </div>
-
-                            <div className='flex items-center gap-2 h-full'>
-                                <UserRoundCheck className='w-8 h-8' />
-                                <span className='font-semibold text-lg'>{totalVoters}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                </CardHeader>
-                <CardContent className='p-0'>
-                    <ChartContainer config={chartConfig} className='p-0'>
-                    <BarChart
-                        accessibilityLayer
-                        data={chartData.length > 0 ? chartData : []}
-                        layout="vertical"
-                        margin={{
-                            left: 20,
-                            right: 20,
-                            top: 10,
-                            bottom: 10,
-                        }}
-                    >
-                        <YAxis
-                            dataKey="option_text"
-                            type="category"
-                            tickLine={false}
-                            tickMargin={10}
-                            axisLine={false}
-                            width={100}
-                            style={{ fontSize: '0.875rem' }}
-                        />
-
-                        <XAxis dataKey="vote_count" type="number" hide />
-
-                        <ChartTooltip
-                            cursor={false}
-                            content={
-                                <ChartTooltipContent 
-                                    hideLabel 
-                                    indicator='line'
-                                    formatter={(value, name, item, index, payload) => {
-                                        const data = payload as ChartDataItem;
-                                        return (
-                                            <div className="flex flex-col gap-1">
-                                                <div className="flex justify-between gap-4">
-                                                    <span className="text-muted-foreground">Votes:</span>
-                                                    <span className="font-mono font-medium">{value}</span>
-                                                </div>
-                                                <div className="flex justify-between gap-4">
-                                                    <span className="text-muted-foreground">Percentage:</span>
-                                                    <span className="font-mono font-medium">{data?.percentage?.toFixed(1)}%</span>
-                                                </div>
-                                            </div>
-                                        );
-                                    }}
-                                />
-                            }
-                        />
-
-                        <Bar className='p-0' barSize={10} dataKey="vote_count" layout="vertical" radius={2} />
-                    </BarChart>
-                    </ChartContainer>
-                </CardContent>
-                </Card>
-                    
-                <div className='w-full h-[35rem]'>
-                    <ChatSection user_id = {userId} poll_id = {id} />
+                        </CardFooter>
+                    </CardContent>
+                    </Card>
                 </div>
+                
+                {user_id && userName ?
+                    <div className='w-full lg:w-[45%] h-full lg:h-auto flex flex-col'>
+                        <ChatSection socket = {socket} userName = {userName} />
+                    </div> : null
+                }
             </div>
         </div>
-
 
         {showQR && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">

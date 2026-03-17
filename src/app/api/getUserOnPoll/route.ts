@@ -16,7 +16,7 @@ export async function POST(req : NextRequest){
             return NextResponse.json({error : "No users found"} , {status : 404});
         }
 
-        console.log({users : users});
+        console.log({users_on_vote : users});
 
         return NextResponse.json({data : users.length} , {status : 200});
 

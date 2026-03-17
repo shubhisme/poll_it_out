@@ -40,6 +40,7 @@ const ChatMessage = new mongoose.Schema({
     poll_id : {type : mongoose.Schema.Types.ObjectId , ref: "Poll" , required : true},
     user_id : {type: mongoose.Schema.Types.ObjectId , ref : "User" , required : true},
     message : {type : String , required: true},
+    user_name : {type : String , required : true}
 
 } , {timestamps: true})
 
