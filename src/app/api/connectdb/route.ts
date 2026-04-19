@@ -3,6 +3,8 @@ import dbconnect from "@/lib/mongodb"
 import {User} from "@/app/models/schema"
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST() {
 
     try{
@@ -38,6 +40,6 @@ export async function POST() {
     }catch(err){
         console.log(err);
 
-        return NextResponse.json({eror: err} , {status: 500})
+        return NextResponse.json({error: err} , {status: 500})
     }
 }
