@@ -1,53 +1,139 @@
-import { Vote } from 'lucide-react'
+"use client"
+
+import { Vote, Plus, UserPlus } from 'lucide-react'
 import Link from 'next/link'
-import React from 'react'
+import React, { useState } from 'react'
 import Info_hero from './Info_hero'
 import Live_board from './Live_board'
+import MyPolls from './MyPolls'
+import HeroSkeleton from './HeroSkeleton'
+import { useAuth } from '@clerk/nextjs';
+import MyVotedPolls from './MyVotedPolls'
+import { toast } from "sonner"
+import { useRouter } from 'next/navigation'
 
 function Hero() {
-  return (
-    <section className='flex justify-center'>
-        <div className='w-[100%] h-full flex justify-center px-15'> 
-            <div className='flex flex-col  w-full gap-y-2 text-black text-center p-5'>
-                <div className='flex flex-col gap-x-2'>
-                    <h1 className='mt-10 font-bold text-5xl'>POLL IT OUT</h1>
-                    <p className='font-semibold'>Real-time polling made simple</p>
-                    <p className='text-center text-gray-500 mt-3'>
-                        Create instant polls, get live results, and engage your audience in real-time.<br/> Perfect for meetings, classrooms, events, and online communities.
+
+    const { isSignedIn, isLoaded, userId } = useAuth()
+    const [pollCode , setPollCode] = useState("");
+    const [open, setOpen] = useState(false)
+    const [isJoining , setIsJoinng] = useState(false);
+
+    const router = useRouter()
+
+    const handleJoin = async () => {
+        const code = pollCode.trim()
+        if (!code) return
+    
+        try {
+            setIsJoinng(true);
+          const res = await fetch(`/api/poll/${code}`)
+          const data = await res.json()
+    
+          if (!res.ok && data?.message) {
+            toast.error(data.message || "Error joining poll")
+            setPollCode("")
+          } else {
+            const { pollId } = data
+            router.push(`/dashboard/poll/${pollId}`)
+            setOpen(false)
+          }
+        } catch (err) {
+
+          const message =
+            typeof err === "object" &&
+            err !== null &&
+            "message" in err &&
+            typeof err.message === "string"
+              ? err.message
+              : "Error joining poll"
+          toast.error(message , { position : "top-center"})
+        }
+        finally{
+            setIsJoinng(false);
+        }
+    
+        setPollCode("")
+      }
+
+    if (!isLoaded) {
+        return <HeroSkeleton />
+    }
+
+    return (
+        <section className='min-h-screen bg-white'>
+            <div className='max-w-7xl mx-auto px-6 py-16'>
+                {/* Hero Header */}
+                <div className='mb-16'>
+                    <h1 className='text-5xl md:text-6xl font-bold text-black mb-4 tracking-tight md:text-left text-center'>
+                        POLL IT OUT
+                    </h1>
+                    <p className='text-xl text-gray-600 font-semibold mb-3 md:text-left text-center'>
+                        Real-time polling made simple
+                    </p>
+                    <p className='text-gray-500 text-lg max-w-2xl leading-relaxed md:text-left text-center'>
+                        Create instant polls, get live results, and engage your audience in real-time. 
+                        Perfect for meetings, classrooms, events, and online communities.
                     </p>
                 </div>
 
-                <div className='mt-3'>
-                    <div className='flex justify-center'>
-                        <Link href="/dashboard/create-poll" className='cursor-pointer'>
-                            <button className='text-white bg-black px-3 py-1 text-xl font-semibold flex gap-x-2 items-center justify-center shadow-[2px_2px_0px_gray] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer'>
-                                <Vote className='text-white'/>
-                                <p>Create Your First Poll!</p>
+                {/* Action Buttons Section */}
+                <div className='border-2 border-black bg-white p-8 mb-16'>
+                    <div className='flex flex-col md:flex-row gap-4 items-center justify-center'>
+                        <Link href="/dashboard/create-poll" className='w-full md:w-auto'>
+                            <button className='w-full md:w-auto border-2 border-black bg-black text-white px-6 py-3 font-semibold flex gap-2 items-center justify-center hover:bg-gray-900 transition-colors active:translate-y-[1px]'>
+                                <Plus size={18} />
+                                Create New Poll
                             </button>
                         </Link>
-                    </div>
 
-                    <p className='text-2xl font-semibold my-3'>OR</p>
+                        <div className='hidden md:block text-gray-400'>•</div>
 
-                    <div className='flex justify-center items-center gap-x-2'>
-                        <input type="number" className='border-2 px-3  no-spinner bg-[#f3f4f6] rounded-[5px] py-[2px]' placeholder='Enter Poll Code' />
+                        <div className='flex gap-2 w-full md:w-auto'>
+                            <input 
+                                type="text"
+                                value={pollCode}
+                                onChange={(e) => setPollCode(e.target.value)}
+                                onKeyDown={(e)=>{
+                                    if(e.key === "Enter") handleJoin()
+                                }}
 
-                        <Link href="/dashboard" className='flex justify-center cursor-pointer'>
-                            <button className='text-white bg-black px-3 py-[3px] font-semibold flex gap-x-2 items-center justify-center shadow-[2px_2px_0px_gray] active:translate-y-[2px] active:shadow-none transition-all rounded-[5px] cursor-pointer'>
-                                <p>Join Poll</p>
+                                className='border-2 border-black px-4 py-3 font-semibold flex-1 md:flex-none w-full md:w-auto focus:outline-none focus:bg-gray-50 transition-colors' 
+                                placeholder='Enter Poll Code' 
+                            />
+                            <button 
+                                onClick={handleJoin}
+                                className='border-2 border-black bg-white text-black px-6 py-3 font-semibold flex gap-2 items-center hover:bg-gray-50 transition-colors active:translate-y-[1px]'
+                            >
+                                <UserPlus size={18} />
+                                {isJoining ?  "Joining ... " : "Join"}
                             </button>
-                        </Link>
+                        </div>
                     </div>
                 </div>
 
-                <Live_board/>
+                {/* My Polls and Voted Polls Section */}
+                {isLoaded && userId && (
+                    <div className='mb-16'>
+                        <div className='flex flex-col lg:flex-row gap-8'>
+                            <MyVotedPolls user_id={userId} />
+                            <MyPolls user_id={userId} />
+                        </div>
+                    </div>
+                )}
 
-                <Info_hero/>
+                {/* Live Board */}
+                <div className='mb-16'>
+                    <Live_board />
+                </div>
 
+                {/* Info Section */}
+                <div>
+                    <Info_hero />
+                </div>
             </div>
-        </div>
-    </section>
-  )
+        </section>
+    )
 }
 
 export default Hero

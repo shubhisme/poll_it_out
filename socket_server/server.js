@@ -16,7 +16,7 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
     cors: {
-        origin: "http://localhost:3000",
+        origin: "*",
         methods: ["GET" , "POST"]
     },
 });
@@ -44,7 +44,6 @@ io.on("connection" , async (socket)=>{
 
             const total_joined = await redis.sCard(`poll:${pollid}:participants`);
             console.log("Redis sAdd result:", total_joined);
-
             
             io.to(pollid).emit("total_joined" , total_joined);
 

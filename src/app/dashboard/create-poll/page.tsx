@@ -1,21 +1,21 @@
 "use client";
 
-import Navbar from "@/app/components/Navbar";
 import { Plus, X, Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import type Poll_data from "@/app/types/Poll_types";
 import { useUser } from "@clerk/nextjs";
+import CreatePollSkeleton from "./CreatePollSkeleton";
 import { toast } from "sonner";
 
 function Page() {
-  const {} = useUser();
+  const { isLoaded , user } = useUser();
   const [polld, setPolld] = useState<Poll_data>({
-    question: "",
-    description: "",
-    options: [],
-    duration: "Forever",
-    qr: "",
+    // question: "",
+    // description: "",
+    // options: [],
+    // duration: "Forever",
+    // qr: "",
     multi_true: false,
   } as Poll_data);
 
@@ -31,6 +31,20 @@ function Page() {
     "3 hours",
     "Forever",
   ];
+
+  const isValid = useCallback(()=>{
+    if(!isLoaded) return false;
+
+    if(!user){
+        toast.error("Please sign in to create a poll");
+
+        router.push(`/dashboard/signin`);
+    }
+  } , [user , isLoaded , router])
+
+  useEffect(()=>{
+    isValid();
+  } , [isValid])
 
   // replace apiCall and handlers with safer versions
   const apiCall = 
@@ -49,13 +63,13 @@ function Page() {
         return;
       }
 
-      console.log("Submitting poll:", {
-        question: polld.question,
-        description: polld.description,
-        options: cleanedOptions,
-        duration: polld?.duration,
-        multi_true: polld?.multi_true,
-      });
+    //   console.log("Submitting poll:", {
+    //     question: polld.question,
+    //     description: polld.description,
+    //     options: cleanedOptions,
+    //     duration: polld?.duration,
+    //     multi_true: polld?.multi_true,
+    //   });
 
       setSubmitting(true);
       try {
@@ -93,11 +107,11 @@ function Page() {
         );
         
         setPolld({
-          question: "",
-          description: "",
+        //   question: "",
+        //   description: "",
           duration: "Forever",
-          qr: "",
-          options: [],
+        //   qr: "",
+        //   options: [],
         } as Poll_data);
 
         setOptions(["", ""]);
@@ -120,7 +134,7 @@ function Page() {
         return newOp;
       });
       setPolld(
-        (current) => ({ ...(current ?? {}), options: options } as Poll_data)
+        (current) => ({ ...(current ?? {}), options: options.map(o => ({ text: o })) } as Poll_data)
       );
     },
     [options]
@@ -136,9 +150,13 @@ function Page() {
     setOptions([...options, ""]);
   };
 
+  if (!isLoaded) {
+    return <CreatePollSkeleton />;
+  }
+
   return (
     <div className="min-h-screen bg-white">
-      <Navbar />
+      {/* <Navbar /> */}
       <div className="flex justify-center w-full">
         <div className="w-full max-w-2xl mx-auto px-4 py-8 md:px-6">
           {/* Header Section */}

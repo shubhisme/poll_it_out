@@ -1,11 +1,23 @@
 "use client";
 
-import SyncUser from "@/app/components/SyncUser";
 import { useSignIn } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+
+interface ClerkError {
+  errors?: Array<{
+    code?: string;
+    message?: string;
+    long_message?: string;
+  }>;
+}
+
+interface SignInFactor {
+  strategy: string;
+  [key: string]: unknown;
+}
 
 export default function CustomSignIn() {
   const router = useRouter();
@@ -37,24 +49,64 @@ export default function CustomSignIn() {
     e.preventDefault();
     setError("");
 
+    if (!signIn) {
+      setError("Sign in not available");
+      return;
+    }
+
     try {
-      const result = await signIn.create({
+      // Step 1: Create sign-in attempt
+      const signInAttempt = await signIn.create({
         identifier: email,
-        password,
       });
 
-      if (result.status === "complete") {
-        await setActive({ session: result.createdSessionId });
-        
-    //   const {data , err} = await db_connect();
-    //   console.log("DB Connected: ",data);
-
+      // Step 2: Check available first factors
+      if (signInAttempt.status === "complete") {
+        // If already complete, set session
+        await setActive({ session: signInAttempt.createdSessionId });
         router.push("/dashboard");
+      } else if (signInAttempt.status === "needs_first_factor") {
+        // Check if password is supported
+        const supportedStrategies = signInAttempt.supportedFirstFactors;
+        const passwordStrategy = supportedStrategies?.find(
+          (factor: SignInFactor) => factor.strategy === "password"
+        );
+
+        if (!passwordStrategy) {
+          setError(
+            "This account doesn't have password authentication enabled. Please use Google or GitHub to sign in, or create a new account with a password."
+          );
+          return;
+        }
+
+        // Attempt first factor verification (password)
+        const attemptResult = await signIn.attemptFirstFactor({
+          strategy: "password",
+          password,
+        });
+
+        if (attemptResult.status === "complete") {
+          await setActive({ session: attemptResult.createdSessionId });
+          router.push("/dashboard");
+        } else {
+          setError("Sign in failed. Please try again.");
+          console.log("Sign in status:", attemptResult.status);
+        }
       } else {
-        console.log(result);
+        setError("Sign in failed. Please try again.");
+        console.log("Unexpected status:", signInAttempt.status);
       }
-    } catch (err: any) {
-      setError(err?.errors?.[0]?.message ?? "Sign in failed");
+    } catch (err: unknown) {
+      const clerkError = err as ClerkError;
+      const errorMessage = clerkError?.errors?.[0]?.message ?? "Invalid email or password";
+      
+      // Handle specific error cases
+      if (errorMessage.includes("not found") || errorMessage.includes("identifier")) {
+        setError("Email not found. Please sign up or try another email.");
+      } else {
+        setError(errorMessage);
+      }
+      console.error("Sign in error:", err);
     }
   };
 
@@ -66,13 +118,9 @@ export default function CustomSignIn() {
         redirectUrl: "/signin/sso-callback",
         redirectUrlComplete: "/dashboard",
       });
-
-    //   const {data , err} = await db_connect();
-    //   console.log("DB Connected: ",data);
-
-
-    } catch (err: any) {
-      setError(err?.errors?.[0]?.message ?? "Google sign in failed");
+    } catch (err: unknown) {
+      const clerkError = err as ClerkError;
+      setError(clerkError?.errors?.[0]?.message ?? "Google sign in failed");
     }
   };
 
@@ -81,12 +129,12 @@ export default function CustomSignIn() {
     try {
       await signIn?.authenticateWithRedirect({
         strategy: "oauth_github",
-        redirectUrl: "/sso-callback",
+        redirectUrl: "/signin/sso-callback",
         redirectUrlComplete: "/dashboard",
       });
-    //   <SyncUser />;
-    } catch (err: any) {
-      setError(err?.errors?.[0]?.long_message ?? "Github sign in failed");
+    } catch (err: unknown) {
+      const clerkError = err as ClerkError;
+      setError(clerkError?.errors?.[0]?.long_message ?? "Github sign in failed");
     }
   };
 

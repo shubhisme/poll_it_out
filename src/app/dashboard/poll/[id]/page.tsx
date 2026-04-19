@@ -5,13 +5,15 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button';
 import { Checkbox } from "@/components/ui/checkbox"
 import Poll_timer from '../../_components/Poll_timer';
-import Navbar from '@/app/components/Navbar';
+import type Poll_data from '@/app/types/Poll_types'
+import type Option_data from '@/app/types/Poll_types'
 import { useAuth } from '@clerk/nextjs';
 import { useRouter } from "next/navigation";
 import { Copy, Check, ChevronRight } from 'lucide-react';
+import PollPageSkeleton from './PollPageSkeleton';
 
 const Page = () => {
-    const [poll_data, setPollData] = useState<any>();
+    const [poll_data, setPollData] = useState<Poll_data | null>(null);
     const [selectedOption, setSelectedOption] = useState<string>("");
     const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
     const [err, setError] = useState("");
@@ -46,9 +48,13 @@ const Page = () => {
 
                 setPollData(res?.data);
 
-            } catch (err: any) {
-                setError(err?.details || "Failed to load poll");
-                console.log(err?.error);
+            } catch (err: unknown) {
+                if (err instanceof Error) {
+                    setError(err.message || "Failed to load poll");
+                } else {
+                    setError("Failed to load poll");
+                }
+                console.log(err);
             }
 
         }, [id, userId]
@@ -56,7 +62,7 @@ const Page = () => {
 
     useEffect(() => {
         isPoll();
-    }, [id, userId]);
+    }, [isPoll, id, userId]);
 
     const handleCheckboxChange = (optionId: string) => {
         setSelectedOptions(prev => {
@@ -71,7 +77,8 @@ const Page = () => {
 
     const handleCopyCode = () => {
         if (poll_data?.share_code) {
-            navigator.clipboard.writeText(poll_data.share_code);
+            const strCode = String(poll_data.share_code);
+            navigator.clipboard.writeText(strCode);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         }
@@ -109,30 +116,24 @@ const Page = () => {
                 setHasVoted(true);
             }
 
-        }catch(err){
-            err?.error ? setError(err?.data?.error  || "Failed to vote") : setError("Failed to vote");
-            console.log({error: err});
+        } catch(err: unknown) {
+            if (err instanceof Error) {
+                setError(err.message || "Failed to vote");
+            } else {
+                setError("Failed to vote");
+            }
+            console.log(err);
         }
 
     }, [id, poll_data, selectedOptions, selectedOption, userId]);
 
     if (!poll_data) {
-        return (
-            <div className="min-h-screen flex flex-col">
-                <Navbar />
-                <div className="flex-1 flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-3">
-                        <div className="w-8 h-8 border-2 border-black border-t-transparent animate-spin" />
-                        <p className="text-lg font-semibold">Loading poll...</p>
-                    </div>
-                </div>
-            </div>
-        );
+        return <PollPageSkeleton />;
     }
 
     return (
         <div className="min-h-screen flex flex-col bg-white">
-            <Navbar />
+            {/* <Navbar /> */}
 
             <div className="flex-1 flex flex-col lg:flex-row">
                 {/* Left: Poll content */}
@@ -171,14 +172,16 @@ const Page = () => {
                         <form onSubmit={handleSubmit}>
                             <div className="space-y-3">
                                 {poll_data?.multi_true ? (
-                                    poll_data?.options?.map((option: any, idx: number) => (
+                                    poll_data?.options?.filter(option => option._id).map((option: Option_data, idx: number) => {
+                                    const optionId = option._id as string;
+                                    return (
                                         <label
-                                            key={option._id}
-                                            htmlFor={option._id}
+                                            key={optionId}
+                                            htmlFor={optionId}
                                             className={`
                                                 group flex items-center gap-4 p-4 sm:p-5 border-2 border-black cursor-pointer
                                                 transition-all duration-150
-                                                ${selectedOptions.includes(option._id)
+                                                ${selectedOptions.includes(optionId)
                                                     ? 'bg-black text-white translate-x-1 translate-y-1 shadow-none'
                                                     : 'bg-white text-black shadow-[4px_4px_0px_black] hover:shadow-[2px_2px_0px_black] hover:translate-x-[2px] hover:translate-y-[2px]'
                                                 }
@@ -186,7 +189,7 @@ const Page = () => {
                                         >
                                             <span className={`
                                                 flex-shrink-0 w-7 h-7 flex items-center justify-center border-2 text-xs font-bold
-                                                ${selectedOptions.includes(option._id)
+                                                ${selectedOptions.includes(optionId)
                                                     ? 'border-white text-white'
                                                     : 'border-black text-black'
                                                 }
@@ -194,26 +197,29 @@ const Page = () => {
                                                 {String.fromCharCode(65 + idx)}
                                             </span>
                                             <Checkbox
-                                                id={option._id}
-                                                checked={selectedOptions.includes(option._id)}
-                                                onCheckedChange={() => handleCheckboxChange(option._id)}
+                                                id={optionId}
+                                                checked={selectedOptions.includes(optionId)}
+                                                onCheckedChange={() => handleCheckboxChange(optionId)}
                                                 className="hidden"
                                             />
                                             <span className="flex-1 text-base sm:text-lg font-medium">
                                                 {option.text}
                                             </span>
-                                            <ChevronRight className={`w-5 h-5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${selectedOptions.includes(option._id) ? 'opacity-100' : ''}`} />
+                                            <ChevronRight className={`w-5 h-5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${selectedOptions.includes(optionId) ? 'opacity-100' : ''}`} />
                                         </label>
-                                    ))
+                                    );
+                                    })
                                 ) : (
-                                    poll_data?.options?.map((option: any, idx: number) => (
+                                    poll_data?.options?.filter(option => option._id).map((option: Option_data, idx: number) => {
+                                    const optionId = option._id as string;
+                                    return (
                                         <label
-                                            key={option._id}
-                                            htmlFor={option._id}
+                                            key={optionId}
+                                            htmlFor={optionId}
                                             className={`
                                                 group flex items-center gap-4 p-4 sm:p-5 border-2 border-black cursor-pointer
                                                 transition-all duration-150
-                                                ${selectedOption === option._id
+                                                ${selectedOption === optionId
                                                     ? 'bg-black text-white translate-x-1 translate-y-1 shadow-none'
                                                     : 'bg-white text-black shadow-[4px_4px_0px_black] hover:shadow-[2px_2px_0px_black] hover:translate-x-[2px] hover:translate-y-[2px]'
                                                 }
@@ -221,7 +227,7 @@ const Page = () => {
                                         >
                                             <span className={`
                                                 flex-shrink-0 w-7 h-7 flex items-center justify-center border-2 text-xs font-bold
-                                                ${selectedOption === option._id
+                                                ${selectedOption === optionId
                                                     ? 'border-white text-white'
                                                     : 'border-black text-black'
                                                 }
@@ -229,21 +235,24 @@ const Page = () => {
                                                 {String.fromCharCode(65 + idx)}
                                             </span>
                                             <Checkbox
-                                                id={option._id}
-                                                checked={selectedOption === option._id}
+                                                id={optionId}
+                                                checked={selectedOption === optionId}
                                                 onCheckedChange={(checked) => {
-                                                    const newval = checked ? option._id : "";
-                                                    setSelectedOption(newval);
-                                                    console.log({options : newval})
+                                                    if (typeof checked === 'boolean' && checked) {
+                                                        setSelectedOption(optionId);
+                                                    } else {
+                                                        setSelectedOption("");
+                                                    }
                                                 }}
                                                 className="hidden"
                                             />
                                             <span className="flex-1 text-base sm:text-lg font-medium">
                                                 {option.text}
                                             </span>
-                                            <ChevronRight className={`w-5 h-5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${selectedOption === option._id ? 'opacity-100' : ''}`} />
+                                            <ChevronRight className={`w-5 h-5 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity ${selectedOption === optionId ? 'opacity-100' : ''}`} />
                                         </label>
-                                    ))
+                                    );
+                                    })
                                 )}
                             </div>
 
@@ -303,7 +312,7 @@ const Page = () => {
                         <div className="border-2 border-black bg-white p-4 shadow-[4px_4px_0px_black]">
                             <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Time Remaining</p>
                             <div className="text-2xl font-bold">
-                                <Poll_timer exp_at={poll_data?.expires_at} onExpire={() => setIsPollExpired(true)} />
+                                {poll_data?.expires_at && <Poll_timer exp_at={poll_data?.expires_at} onExpire={() => setIsPollExpired(true)} />}
                             </div>
                         </div>
 

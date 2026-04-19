@@ -2,7 +2,6 @@
 
 import { useParams } from 'next/navigation';
 import React, { useCallback, useEffect, useState } from 'react'
-import Navbar from '@/app/components/Navbar';
 import { Bar, BarChart, XAxis, YAxis , Pie, PieChart, Cell } from "recharts"
 import {
   Card,
@@ -19,19 +18,19 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart"
 import { useAuth } from '@clerk/nextjs';
-import { CheckLine , UserRoundCheck, QrCode, X , CircleQuestionMark , ChartBar, ChartPie } from 'lucide-react';
+import { QrCode, X , CircleQuestionMark , ChartBar, ChartPie } from 'lucide-react';
 import { Socket } from 'socket.io-client';
 import { getSocket , disconnectSocket } from '@/lib/socket';
 import Image from 'next/image';
 import { Button } from "@/components/ui/button"
 import { ToolTip} from '@/app/dashboard/_components/Tooltip';
 import { ChatSection } from '@/app/dashboard/_components/ChatSection';
+import PollViewSkeleton from './PollViewSkeleton';
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
@@ -82,6 +81,7 @@ const Page = () => {
 
     const [totalVoters , setTotalVoters] = useState(0);
     const [showQR, setShowQR] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
 
     const {userId , isLoaded} = useAuth()
     const { id } = useParams();
@@ -109,62 +109,67 @@ const Page = () => {
 
     const isPoll = useCallback(
         async ()=>{
-        try{
-            const poll_data = await fetch(`/api/validate/checkpollbyid` , {
-                method : "POST",
-                headers : {
-                    "Content-Type": "application/json"
-                },
-                body : JSON.stringify({pollid : id , user_id : userId})
-            })
+            if(isLoaded){
+                try{
+                    setIsLoading(true);
+                    const poll_data = await fetch(`/api/validate/checkpollbyid` , {
+                        method : "POST",
+                        headers : {
+                            "Content-Type": "application/json"
+                        },
+                        body : JSON.stringify({pollid : id , user_id : userId})
+                    })
 
-            const res = await poll_data.json();
-            // console.log(res);
-            
-            setPollData(res?.data);
+                    const res = await poll_data.json();
+                    // console.log(res);
+                    
+                    setPollData(res?.data);
 
-            if(res?.status === 200){
-                setPollId(res?.data?._id);
-                setUser_id(res?.data?.created_by);
-                setUserName(res?.userName);
-                console.log({user_id : res?.data?.created_by})
+                    if(res?.status === 200){
+                        setPollId(res?.data?._id);
+                        setUser_id(res?.data?.created_by);
+                        setUserName(res?.userName);
+                        console.log({user_id : res?.data?.created_by})
 
-                if(res?.data?.multi_true){
-                    getVoters();
+                        if(res?.data?.multi_true){
+                            getVoters();
+                        }
+
+                        setJoin_code(res?.data?.share_code);
+
+                        if(res?.data?.share_code){
+                            setImage_link(res?.data?.qr);
+                        }
+
+                        const totalV = res?.data?.options?.reduce((acc: number, option: { votes_count: number }) => {
+                            return acc + option.votes_count;
+                        }, 0) ?? 0;
+                        
+                        setTotalVotes(totalV);
+                        console.log({total_votes : totalV})
+
+                        const newChartData: ChartDataItem[] = res?.data?.options.map((option: { text: string; votes_count: number }) => ({
+                            option_text: option.text,
+                            vote_count: option.votes_count,
+                            percentage: totalV > 0 ? (option.votes_count / totalV) * 100 : 0
+                        })) || [];
+                        
+                        setChartData(newChartData);
+                        setQuestion(res?.data?.question);
+                        setMultiTrue(res?.data?.multi_true);
+                        setDescription(res?.data?.description);
+
+                        // console.log({chartdata : newChartData});
+                    }
+                    setIsLoading(false);
+
+                }catch(err: unknown){
+                    console.log(err);
+                    setIsLoading(false);
                 }
-
-                setJoin_code(res?.data?.share_code);
-
-                if(res?.data?.share_code){
-                    setImage_link(res?.data?.qr);
-                }
-
-                const totalV = res?.data?.options?.reduce((acc: number, option: { votes_count: number }) => {
-                    return acc + option.votes_count;
-                }, 0) ?? 0;
-                
-                setTotalVotes(totalV);
-                console.log({total_votes : totalV})
-
-                const newChartData: ChartDataItem[] = res?.data?.options.map((option: { text: string; votes_count: number }) => ({
-                    option_text: option.text,
-                    vote_count: option.votes_count,
-                    percentage: totalV > 0 ? (option.votes_count / totalV) * 100 : 0
-                })) || [];
-                
-                setChartData(newChartData);
-                setQuestion(res?.data?.question);
-                setMultiTrue(res?.data?.multi_true);
-                setDescription(res?.data?.description);
-
-                // console.log({chartdata : newChartData});
             }
 
-        }catch(err: unknown){
-            console.log(err);
-        }
-
-        } , [id, getVoters , userId] 
+        } , [id, getVoters , userId , isLoaded] 
     );
 
     useEffect(() => {
@@ -216,7 +221,6 @@ const Page = () => {
         if(!socket || !pollId){
             return;
         }
-
 
         socket.on("total_joined" , (count : number)=>{
             setLiveCount(count);
@@ -311,10 +315,12 @@ const Page = () => {
     )
 
   return (
-    <>        
-        <Navbar />
+    <>
+        {isLoading ? <PollViewSkeleton /> : (
+        <>
+        {/* <Navbar /> */}
 
-        <div className='flex mx-auto w-[90%] flex-col gap-4 mt-3'>
+        <div className='flex mx-auto w-[90%] flex-col gap-4 pt-3'>
             <div className='flex flex-wrap justify-between items-center gap-3'>
                 <p>Joining Code : <span className='text-lg px-2 font-bold bg-black text-white'>{join_code}</span></p>
                 
@@ -344,7 +350,7 @@ const Page = () => {
 
             </div>
             
-            <div className='flex flex-col lg:flex-row gap-6 lg:h-[35rem]'>
+            <div className='flex flex-col lg:flex-row gap-6 lg:h-[calc(100vh-200px)] h-[calc(100vh-180px)]'>
 
                 <div className='flex-1 border-2 border-black bg-white shadow-[4px_4px_0px_black] p-5 sm:p-6 flex flex-col h-full lg:h-auto mb-0'>
                     <Card className='w-full m-0 flex flex-col shadow-none border-none p-0 bg-transparent h-full'>
@@ -393,13 +399,13 @@ const Page = () => {
                         </ChartContainer>
                         <CardFooter>
                             <div className='flex items-center justify-between w-full flex-shrink-0'>
-                                <div className='flex items-center gap-1.5 border-2 border-black px-3 py-1'>
+                                <div className='flex items-center gap-1.5 border-2 border-black px-3 py-0.5'>
                                     <p>Total Votes: </p>
                                     <span className='font-bold text-lg'>{totalVotes}</span>
                                 </div>
 
                                 {multiTrue && (
-                                    <div className='flex items-center gap-1.5 border-2 border-black px-3 py-1'>
+                                    <div className='flex items-center gap-1.5 border-2 border-black px-3 py-0.5'>
                                         <p>Total Voters: </p>
                                         <span className='font-bold text-lg'>{totalVoters}</span>
                                     </div>
@@ -445,6 +451,8 @@ const Page = () => {
                     </div>
                 </div>
             </div>
+        )}
+        </>
         )}
     </> 
   )

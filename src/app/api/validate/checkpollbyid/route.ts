@@ -33,6 +33,6 @@ export async function POST(request: NextRequest) {
 
     } catch (error) {
         console.error("Error fetching poll by ID:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        return NextResponse.json({ error: error}, { status: 500 });
     }
 }

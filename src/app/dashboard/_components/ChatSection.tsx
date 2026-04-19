@@ -156,7 +156,7 @@ export function ChatSection({ socket , userName }: ChatSectionProps) {
     return () => {
       socket.off("chat", handleIncomingChat);
     };
-  }, [socket, pollId]);
+  }, [socket, pollId , messages]);
 
 
   // send message logic

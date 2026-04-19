@@ -2,49 +2,46 @@ import { ChartArea, Layers, MonitorCog } from 'lucide-react'
 import React from 'react'
 
 function Info_hero() {
+  const features = [
+    {
+      icon: MonitorCog,
+      title: 'Instant Setup',
+      description: 'Create polls in seconds with no registration required. Share a simple code and start collecting responses immediately.'
+    },
+    {
+      icon: ChartArea,
+      title: 'Live Results',
+      description: 'Watch responses come in real-time with live charts and analytics. Perfect for interactive presentations and audience engagement.'
+    },
+    {
+      icon: Layers,
+      title: 'Multiple Formats',
+      description: 'Support for multiple choice, ratings, and more. Customize your polls to suit any need or event.'
+    }
+  ];
+
   return (
-                <div className='flex mt-10'>
-                    <div className='grid grid-cols-3 gap-x-6 justify-around items-center w-full'> 
-                        <div className='flex flex-col justify-center gap-y-2 border-2 bg-[#f3f4f6] p-4 h-full'>
-
-                            <div className='flex gap-x-2 justify-center items-center'>
-                                <MonitorCog/>
-                                <p className='font-semibold'>Instant Setup</p>
-                            </div>
-
-                            <div className='flex bg-white border-2 p-1 h-full'>
-                                <p className='text-left text-gray-800'>Create polls in seconds. No registration required for participants. Share a simple code and start collecting responses immediately.Just share a short code or link and your audience can instantly join in.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className='flex flex-col justify-center gap-y-2 border-2 bg-[#f3f4f6] p-4 h-full'>
-
-                            <div className='flex gap-x-2 justify-center items-center'>
-                                <ChartArea/>
-                                <p className='font-semibold'>Live Results</p>
-                            </div>
-
-                            <div className='felx bg-white border-2 p-1 h-full'>
-                                <p className='text-left text-gray-800'>Watch responses come in real-time. See live charts and analytics as participants vote. This makes it perfect for interactive presentations, team brainstorming, or large audience engagement.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className='flex flex-col justify-center gap-y-2 border-2 bg-[#f3f4f6] p-4 h-full'>
-
-                            <div className='flex gap-x-2 justify-center items-center'>
-                                <Layers/>
-                                <p className='font-semibold'>Multiple Formats</p>
-                            </div>
-
-                            <div className='felx bg-white border-2 p-1 h-full'>
-                                <p className='text-left text-gray-800'>Support for multiple choice, rating scales, open text, and more. Customize your polls with flexible options to suit classrooms, workshops, business meetings, or events.
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    <div className='mt-16'>
+      <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+        {features.map((feature, index) => {
+          const Icon = feature.icon;
+          return (
+            <div
+              key={index}
+              className='border-2 border-black bg-white p-6 hover:shadow-[4px_4px_0px_rgba(0,0,0,0.1)] transition-all duration-200'
+            >
+              <div className='flex items-center gap-3 mb-4'>
+                <Icon className='text-black' size={24} />
+                <h3 className='font-bold text-black text-lg'>{feature.title}</h3>
+              </div>
+              <p className='text-gray-600 text-sm leading-relaxed'>
+                {feature.description}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   )
 }
 

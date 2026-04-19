@@ -19,7 +19,8 @@ export async function GET(req: Request,
 
         return NextResponse.json({success: true, pollId: poll._id}, {status: 200});
 
-    }catch(err){
-        return NextResponse.json({success: false, message: err.message || "Error fetching poll"}, {status: 500});
+    }catch(err : unknown){
+        const errorMessage = err instanceof Error ? err.message : "Error fetching poll";
+        return NextResponse.json({success: false, message: errorMessage}, {status: 500});
     }
 }

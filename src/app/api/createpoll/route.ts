@@ -2,7 +2,6 @@ import dbconnect from "@/lib/mongodb";
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import {User , Poll } from "@/app/models/schema";
-import { redirect } from "next/navigation";
 import type Poll_data from "@/app/types/Poll_types";
 
 function duration_convert(dur : string){
@@ -36,9 +35,6 @@ export async function POST(req: Request) {
     }
 
     const { question, description, options, duration, multi_true} = body;
-    const rawOptions = Array.isArray(body.options)
-      ? body.options
-      : [];
     
     if(options.length < 2 || options.length > 10){
         return NextResponse.json({ error: "Options must be between 2 and 10" }, { status: 400 });
@@ -48,7 +44,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Question is required" }, { status: 400 });
     }
 
-    const formatted_op = options.map((opt : string)=> ({text: opt.trim()}));
+    const formatted_op = (options as unknown as string[]).map((opt: string) => ({text: opt.trim()}));
 
     const shareable_code = Math.floor(Math.random() * 90000) + 10000;
 
@@ -80,8 +76,9 @@ export async function POST(req: Request) {
     await pollCreated.save();
 
     return NextResponse.json({ data: pollCreated }, { status: 201 });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Failed to create poll";
     console.error("Error creating poll:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }

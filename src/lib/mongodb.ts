@@ -9,8 +9,7 @@ if(!MONGODB_URL){
 
 // Extend global type to include mongoose property
 declare global {
-    // eslint-disable-next-line no-var
-    var mongoose: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } | undefined;
+    var mongoose: { conn: mongoose.Connection | null; promise: Promise<mongoose.Connection> | null } | undefined;
 }
 
 let cached = global.mongoose;

@@ -1,30 +1,34 @@
 import React from 'react'
 
 function Live_board() {
+  const stats = [
+    { number: '1000', label: 'Polls Created' },
+    { number: '2566', label: 'Responses' },
+    { number: '2600', label: 'Active Users' },
+    { number: '95%', label: 'Up Time' }
+  ];
+
   return (
-    <section className='mt-10'>
-        <div className='flex justify-around border-2 px-15 py-3 bg-[#f3f4f6]'>
-
-            <div className='flex flex-col gap-y-1 justify-center'>
-                <p className='text-3xl'>1000</p>
-                <p className='text-gray-600 font-light'>Polls Created</p>
+    <section className='my-16'>
+      <div className='border-2 border-black bg-white'>
+        <div className='grid grid-cols-2 md:grid-cols-4'>
+          {stats.map((stat, index) => (
+            <div
+              key={index}
+              className={`p-8 flex flex-col items-center justify-center ${
+                index !== stats.length - 1 ? 'md:border-r-2 border-black' : ''
+              } ${index % 2 === 1 ? 'md:border-r-0' : ''} border-b-2 border-black md:border-b-0 last:border-b-0`}
+            >
+              <p className='text-4xl md:text-5xl font-bold text-black mb-2'>
+                {stat.number}
+              </p>
+              <p className='text-gray-600 font-semibold text-sm text-center'>
+                {stat.label}
+              </p>
             </div>
-
-            <div className='flex flex-col gap-y-1 justify-center'>
-                <p className='text-3xl'>2566</p>
-                <p className='text-gray-600 font-light'>Responses</p>
-            </div>
-
-            <div className='flex flex-col gap-y-1 justify-center'>
-                <p className='text-3xl'>2600</p>
-                <p className='text-gray-600 font-light'>Active Users</p>
-            </div>
-
-            <div className='flex flex-col gap-y-1 justify-center'>
-                <p className='text-3xl'>95%</p>
-                <p className='text-gray-600 font-light'>Up Time</p>
-            </div>
+          ))}
         </div>
+      </div>
     </section>
   )
 }
