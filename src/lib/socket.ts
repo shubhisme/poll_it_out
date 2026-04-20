@@ -4,7 +4,7 @@ let socket : Socket | null = null;
 
 export const getSocket= (clerk_id : string) : Socket=>{
     if(!socket){
-        socket = io("http://localhost:4000" , {
+        socket = io("https://socket-server-xtgs.onrender.com" , {
             auth : {
                 clerk_id: clerk_id
             },

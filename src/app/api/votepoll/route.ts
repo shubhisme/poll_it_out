@@ -111,7 +111,7 @@ export async function POST(req: NextRequest) {
 
         try{
 
-            await fetch("http://localhost:4000/notify-update" , {
+            await fetch("https://socket-server-xtgs.onrender.com/notify-update" , {
                 method: "POST",
                 headers : {
                     "Content-Type" : "application/json"

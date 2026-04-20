@@ -59,7 +59,7 @@ export async function POST(req : NextRequest){
                 createdAt: data?.createdAt ?? new Date().toISOString()
             };
 
-            await fetch("http://localhost:4000/chat-section" , {
+            await fetch("https://socket-server-xtgs.onrender.com/chat-section" , {
                 method : "POST",
                 headers : {
                     "Content-Type" : "application/json"
