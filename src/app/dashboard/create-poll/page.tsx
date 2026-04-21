@@ -38,7 +38,7 @@ function Page() {
     if(!user){
         toast.error("Please sign in to create a poll");
 
-        router.push(`/dashboard/signin`);
+        router.push(`/signin`);
     }
   } , [user , isLoaded , router])
 
