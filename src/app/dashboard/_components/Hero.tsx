@@ -11,6 +11,7 @@ import { useAuth } from '@clerk/nextjs';
 import MyVotedPolls from './MyVotedPolls'
 import { toast } from "sonner"
 import { useRouter } from 'next/navigation'
+import Active from './Active'
 
 function Hero() {
 
@@ -122,10 +123,15 @@ function Hero() {
                     </div>
                 )}
 
-                {/* Live Board */}
-                <div className='mb-16'>
-                    <Live_board />
+                {/*Active Section */}
+                <div>
+                    <Active />
                 </div>
+                
+                {/* Live Board */}
+                {/* <div className='mb-16'>
+                    <Live_board />
+                </div> */}
 
                 {/* Info Section */}
                 <div>

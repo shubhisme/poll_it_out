@@ -94,7 +94,7 @@ function Page() {
 
         if (response.status === 401) {
           toast.error("Please sign in to create a poll");
-          router.push("/(auth)/signin/");
+          router.push("/signin/");
           return;
         }
 
