@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
 
         const voteIn = await Vote.findOne({poll_id : poll_id , user_id :userID});
 
+        console.log({voteIn : voteIn})
         if(voteIn){
             return NextResponse.json({hasVoted : true} , {status : 200});
         }

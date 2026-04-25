@@ -99,7 +99,7 @@ function Active() {
             <section className='mt-8 w-full px-2 sm:px-4'>
                 <div className='mb-6'>
                     <h2 className='text-2xl sm:text-3xl font-bold text-black'>Active Polls</h2>
-                    <p className='text-gray-500 text-sm sm:text-base mt-2'>{pollData.length} poll{pollData.length !== 1 ? 's' : ''} created</p>
+                    <p className='text-gray-500 text-sm sm:text-base mt-2'>{pollData.length} poll{pollData.length !== 1 ? 's' : ''} you can vote in</p>
                 </div>
 
                 <div className='max-h-[600px] overflow-y-auto pr-2'>

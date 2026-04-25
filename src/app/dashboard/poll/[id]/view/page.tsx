@@ -179,24 +179,24 @@ const Page = () => {
     const hasVoted = useCallback(async()=>{
         if(isLoaded){
             try{
-                setIsLoading(true);
+                // setIsLoading(true);
                 const res = await fetch(`/api/validate/hasvoted` , {
                     method : "POST",   
                     headers :{
                         "Content-Type": "application/json"
                     },
-                    body : JSON.stringify({pollid : id , user_id : userId})
+                    body : JSON.stringify({poll_id : id , user_id : userId})
                 })
 
                 const data = await res.json();
 
-                if(!data.hasvoted){
+                if(data.hasVoted === false){
                     toast.error("You have not voted in this poll.");
 
                     router.push(`/dashboard/poll/${id}`);
                 }
 
-                set_has_voted(data.hasvoted);
+                set_has_voted(data.hasVoted);
                 setIsLoading(false);
             }catch(err){
                 console.error("Error fetching vote status:", err);
@@ -207,11 +207,17 @@ const Page = () => {
     } , [id , userId, isLoaded , router])
 
     useEffect(() => {
-        hasVoted();
+        const loadData = async () => {
+            await hasVoted();
+        };
+        loadData();
+    }, [id, userId, isLoaded, hasVoted]);
 
-        if(has_voted)
+    useEffect(() => {
+        if(has_voted) {
             isPoll();
-    }, [id, userId, isLoaded]);
+        }
+    }, [has_voted, id, userId, isLoaded, isPoll]);
 
     useEffect(()=>{
         if(!userId){return;}
