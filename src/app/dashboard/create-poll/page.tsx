@@ -24,12 +24,12 @@ function Page() {
   const router = useRouter();
 
   const duration_option = [
-    "3 minutes",
-    "5 minutes",
-    "10 minutes",
-    "1 hour",
-    "3 hours",
-    "Forever",
+      "Forever",
+      "3 hours",
+      "1 hour",
+      "10 minutes",
+      "5 minutes",
+      "3 minutes",
   ];
 
   const isValid = useCallback(()=>{
@@ -299,7 +299,7 @@ function Page() {
                     }}
                   >
                     {duration_option.map((val, ind) => (
-                      <option value={val} key={ind}>
+                      <option value={val} key={ind} defaultValue={"Forever"}>
                         {val === "Forever" ? "∞ Forever" : val}
                       </option>
                     ))}

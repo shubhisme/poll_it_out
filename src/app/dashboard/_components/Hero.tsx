@@ -12,6 +12,7 @@ import MyVotedPolls from './MyVotedPolls'
 import { toast } from "sonner"
 import { useRouter } from 'next/navigation'
 import Active from './Active'
+import Image from 'next/image';
 
 function Hero() {
 
@@ -137,6 +138,37 @@ function Hero() {
                 <div>
                     <Info_hero />
                 </div>
+
+                <footer>
+                    <div className='border-t-2 border-black pt-8 text-center text-gray-500'>
+                        <p>© 2026 Poll It Out. Created By <span className='text-black '>Shubh Solanki</span>.</p>
+
+                        <div className='flex justify-between w-[29%] mt-4 mx-auto'>
+                            <Link href={`https://github.com/shubhisme`} target="_blank" rel="noopener noreferrer">
+                                <button className=''>
+                                    <Image
+                                        src="/github.png"
+                                        alt="github"
+                                        width={25}
+                                        height={25}
+                                    />
+                                </button>
+                            </Link>
+
+                            <Link href={`https://www.linkedin.com/in/shubh-solanki-30a464219/`} target="_blank" rel="noopener noreferrer">
+                                <button className=''>
+                                    <Image src="/linkedin.png" alt="linkedin" width={25} height={25} />
+                                </button>
+                            </Link>
+
+                            <Link href={`http://x.com/ShubhS16225`} target="_blank" rel="noopener noreferrer">
+                                <button className=''>
+                                    <Image src="/twitter.png" alt="twitter" width={25} height={25} />
+                                </button>
+                            </Link>
+                        </div>
+                    </div>
+                </footer>
             </div>
         </section>
     )

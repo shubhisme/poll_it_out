@@ -34,6 +34,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { toast } from 'sonner';
+import { useRouter } from "next/navigation";
 
 interface ChartDataItem {
   option_text: string;
@@ -82,9 +84,11 @@ const Page = () => {
     const [totalVoters , setTotalVoters] = useState(0);
     const [showQR, setShowQR] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [has_voted , set_has_voted] = useState(false);
 
     const {userId , isLoaded} = useAuth()
     const { id } = useParams();
+    const router = useRouter();
 
     const getVoters = useCallback(
         async ()=>{
@@ -129,7 +133,7 @@ const Page = () => {
                         setPollId(res?.data?._id);
                         setUser_id(res?.data?.created_by);
                         setUserName(res?.userName);
-                        console.log({user_id : res?.data?.created_by})
+                        // console.log({user_id : res?.data?.created_by})
 
                         if(res?.data?.multi_true){
                             getVoters();
@@ -146,7 +150,7 @@ const Page = () => {
                         }, 0) ?? 0;
                         
                         setTotalVotes(totalV);
-                        console.log({total_votes : totalV})
+                        // console.log({total_votes : totalV})
 
                         const newChartData: ChartDataItem[] = res?.data?.options.map((option: { text: string; votes_count: number }) => ({
                             option_text: option.text,
@@ -172,9 +176,42 @@ const Page = () => {
         } , [id, getVoters , userId , isLoaded] 
     );
 
+    const hasVoted = useCallback(async()=>{
+        if(isLoaded){
+            try{
+                setIsLoading(true);
+                const res = await fetch(`/api/validate/hasvoted` , {
+                    method : "POST",   
+                    headers :{
+                        "Content-Type": "application/json"
+                    },
+                    body : JSON.stringify({pollid : id , user_id : userId})
+                })
+
+                const data = await res.json();
+
+                if(!data.hasvoted){
+                    toast.error("You have not voted in this poll.");
+
+                    router.push(`/dashboard/poll/${id}`);
+                }
+
+                set_has_voted(data.hasvoted);
+                setIsLoading(false);
+            }catch(err){
+                console.error("Error fetching vote status:", err);
+                setIsLoading(false);
+            }
+        }
+
+    } , [id , userId, isLoaded , router])
+
     useEffect(() => {
-        isPoll();
-    }, [isPoll]);
+        hasVoted();
+
+        if(has_voted)
+            isPoll();
+    }, [id, userId, isLoaded]);
 
     useEffect(()=>{
         if(!userId){return;}
@@ -199,7 +236,7 @@ const Page = () => {
         socket.emit("join_poll" , pollId);
 
         socket.on("update_poll" , (data : SocketPollUpdateItem[])=>{
-            console.log("Poll updated via socket:", data);
+            // console.log("Poll updated via socket:", data);
             
             const updatedChartData: ChartDataItem[] = data.map((item) => ({
                 option_text: item.text,

@@ -5,7 +5,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 function PollPageSkeleton() {
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <Navbar />
 
       <div className="flex-1 flex flex-col lg:flex-row">
         <div className="flex-1 flex flex-col justify-center px-5 sm:px-8 md:px-12 lg:px-16 py-8 lg:py-12">

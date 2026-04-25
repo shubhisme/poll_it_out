@@ -292,7 +292,7 @@ const Page = () => {
                                             px-8 sm:px-12 py-5 sm:py-6 text-base sm:text-lg font-bold
                                             bg-white text-black border-2 border-black
                                             shadow-[4px_4px_0px_gray]
-                                            hover:translate-y-[2px] hover:shadow-[2px_2px_0px_gray]
+                                            hover:translate-y-[2px] hover:shadow-[2px_2px_0px_gray] hover:bg-transparent
                                             active:translate-y-[4px] active:shadow-none
                                             transition-all
                                         "
@@ -312,7 +312,7 @@ const Page = () => {
                         <div className="border-2 border-black bg-white p-4 shadow-[4px_4px_0px_black]">
                             <p className="text-xs font-bold uppercase tracking-widest text-gray-500 mb-2">Time Remaining</p>
                             <div className="text-2xl font-bold">
-                                {poll_data?.expires_at && <Poll_timer exp_at={poll_data?.expires_at} onExpire={() => setIsPollExpired(true)} />}
+                                <Poll_timer exp_at={poll_data?.expires_at} onExpire={() => setIsPollExpired(true)} />
                             </div>
                         </div>
 
@@ -339,7 +339,7 @@ const Page = () => {
                         {isPollExpired && poll_data?.expires_at && (
                             <div className="border-2 border-red-500 bg-red-50 p-4">
                                 <p className="font-bold text-red-600 text-sm">This poll has expired.</p>
-                                <p className="text-red-500 text-xs mt-1">You can still view results.</p>
+                                <p className="text-red-500 text-xs mt-1">You can still view results provided you have voted.</p>
                             </div>
                         )}
                     </div>

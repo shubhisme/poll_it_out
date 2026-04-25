@@ -1,5 +1,4 @@
 import React from 'react'
-import Navbar from '../components/Navbar'
 import Hero from './_components/Hero'
 import SyncUser from '../components/SyncUser'
 import {AppSidebar} from '../components/Sidebar_Nav'

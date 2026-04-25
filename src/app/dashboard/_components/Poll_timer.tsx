@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-export default function Poll_timer({exp_at, onExpire} : {exp_at: Date | string, onExpire?: () => void}) {
+export default function Poll_timer({exp_at, onExpire} : {exp_at?: Date | string, onExpire?: () => void}) {
 
     const [displayTime , setDisplaytime] = useState<string | null>(null);
 
