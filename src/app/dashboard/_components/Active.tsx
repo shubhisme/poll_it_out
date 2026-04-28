@@ -3,6 +3,7 @@ import Poll_data from '@/app/types/Poll_types'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { Check, Copy } from 'lucide-react'
+import Image from 'next/image'
 
 function Active() {
 
@@ -171,8 +172,10 @@ function Active() {
                                         </Link>
 
                                         {/* Share Button */}
-                                        <button className='flex-1 border-2 border-black bg-white text-black px-3 py-2 text-xs sm:text-sm font-bold hover:bg-green-50 hover:border-green-600 active:translate-y-[1px] shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all rounded-none' onClick={() =>whatsapp_share(poll._id || '')}>
-                                            Share
+                                        <button className='flex items-center gap-x-3 border-2 border-black bg-white text-black px-3 py-2 text-xs sm:text-sm font-bold hover:bg-green-50 hover:border-green-600 active:translate-y-[1px] shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] transition-all rounded-none' onClick={() =>whatsapp_share(poll._id || '')}>
+                                            <Image src={`/whatsapp_black.png`} alt='whatsapp' width={18} height={18} /> 
+                                            
+                                            <p>Share</p>
                                         </button>
                                     </div>
                                 </div>
