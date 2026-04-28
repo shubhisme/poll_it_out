@@ -11,6 +11,7 @@ import { useAuth } from '@clerk/nextjs';
 import { useRouter } from "next/navigation";
 import { Copy, Check, ChevronRight } from 'lucide-react';
 import PollPageSkeleton from './PollPageSkeleton';
+import { toast } from 'sonner';
 
 const Page = () => {
     const [poll_data, setPollData] = useState<Poll_data | null>(null);
@@ -30,12 +31,17 @@ const Page = () => {
 
         if(!userId){
             router.push("/signin");
+            return;
         }
+
+        isPoll();
     } , [isLoaded , userId , router]);
 
     const isPoll = useCallback(
         async () => {
             try {
+
+                console.log({userID: userId})
                 const poll_data_api = await fetch(`/api/validate/checkpollbyid`, {
                     method: "POST",
                     headers: {
@@ -51,18 +57,16 @@ const Page = () => {
             } catch (err: unknown) {
                 if (err instanceof Error) {
                     setError(err.message || "Failed to load poll");
+                    toast.error(err.message || "Failed to load poll");
                 } else {
                     setError("Failed to load poll");
+                    toast.error("Failed to load poll");
                 }
                 console.log(err);
             }
 
         }, [id, userId]
     );
-
-    useEffect(() => {
-        isPoll();
-    }, [isPoll, id, userId]);
 
     const handleCheckboxChange = (optionId: string) => {
         setSelectedOptions(prev => {
@@ -95,7 +99,7 @@ const Page = () => {
             clerk_id : userId
         }
 
-        console.log({vote_api_data : vote_api_data});
+        // console.log({vote_api_data : vote_api_data});
 
         try{
             const vote_api = await fetch(`/api/votepoll` , {
@@ -110,10 +114,12 @@ const Page = () => {
             const data = await vote_api.json()
             console.log({data});
 
-            if(data?.satus !== 200){
+            if(data?.status !== 200){
                 setError(data?.error);
+                toast.error(data?.error || "Failed to vote");
             }else{
                 setHasVoted(true);
+                toast.success("Vote submitted successfully!");
             }
 
         } catch(err: unknown) {

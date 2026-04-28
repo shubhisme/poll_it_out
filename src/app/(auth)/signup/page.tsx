@@ -60,7 +60,7 @@ function Page() {
             });
             console.log("User signup: ",sigininrec);
             
-            router.push("/dashboard");
+            router.back();
             }
         catch(err: unknown){
             const clerkError = err as ClerkError;
@@ -69,24 +69,6 @@ function Page() {
         }
     }
 
-    const handleGitHubLogin = async()=>{
-        seterror("");
-        try{
-            const signuprec = await signUp?.authenticateWithRedirect({
-                strategy: "oauth_github",
-                redirectUrl: "/signin/sso-callback",
-                redirectUrlComplete: "/dashboard"
-            });
-            console.log("User signup: ",signuprec);
-            
-            router.push("/dashboard");
-            }
-        catch(err: unknown){
-            const clerkError = err as ClerkError;
-            console.log(clerkError?.errors?.[0]?.message || "You are already signed In....");
-            seterror(clerkError?.errors?.[0]?.long_message || "You are already signed In....")
-        }
-    }
     return (
         <>
             {synced && <SyncUser/>}
@@ -198,7 +180,7 @@ function Page() {
                             <span className="text-xs sm:text-sm">Google</span>
                         </button>
 
-                        <button
+                        {/* <button
                             type="button"
                             onClick={handleGitHubLogin}
                             className="flex items-center gap-1.5 sm:gap-2 justify-center w-full border-2 border-black py-2 xs:py-2.5 sm:py-3 bg-[#f9fafc] text-[#7e737a] font-semibold text-xs sm:text-sm shadow-[2px_2px_0px_black] active:translate-y-[2px] active:shadow-none transition-all cursor-pointer hover:bg-white"
@@ -206,7 +188,7 @@ function Page() {
                         >
                             <Image src="/github-icon.svg" alt="github" width={16} height={16} className="w-3.5 sm:w-4" />
                             <span className="text-xs sm:text-sm">GitHub</span>
-                        </button>
+                        </button> */}
                     </div>
 
                     {/* Sign In Link */}

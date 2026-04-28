@@ -8,7 +8,7 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         const pollid = body.pollid;
         const userId = body.user_id;
-        console.log({pollid});
+        console.log({pollid , userId});
 
         if (!pollid) {
             return NextResponse.json({ error: "Poll ID is required" }, { status: 400 });
