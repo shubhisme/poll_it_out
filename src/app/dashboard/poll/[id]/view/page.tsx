@@ -191,7 +191,9 @@ const Page = () => {
                 const data = await res.json();
 
                 if(data.hasVoted === false){
-                    toast.error("You have not voted in this poll.");
+                    toast.error("You have not voted in this poll.", {
+                        description: "Only Voted Members can access the poll results.",
+                    });
 
                     router.push(`/dashboard/poll/${id}`);
                 }

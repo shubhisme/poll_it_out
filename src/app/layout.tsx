@@ -5,6 +5,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Toaster } from "@/components/ui/sonner";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { AppSidebar } from "./components/Sidebar_Nav";
+import {  AlertDialogTrigger} from "@/components/ui/alert-dialog";
 
 const courierPrime = Courier_Prime({
   variable: "--font-courier-prime",
@@ -30,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SidebarProvider defaultOpen={false}>
             <AppSidebar />
             <div className="flex-1 w-full">
+                {/* <AlertDialogTrigger /> */}
               <SidebarTrigger className="fixed top-4 right-4 z-40 border-2 border-black bg-white shadow-[2px_2px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_rgba(0,0,0,1)] active:translate-y-[2px] active:shadow-none transition-all rounded-none" />
               <main className="w-full h-full">
                 {children}

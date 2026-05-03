@@ -114,7 +114,7 @@ const Page = () => {
             const data = await vote_api.json()
             console.log({data});
 
-            if(data?.status !== 200){
+            if(vote_api?.status !== 200){
                 setError(data?.error);
                 toast.error(data?.error || "Failed to vote");
             }else{

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Copy, Check, BarChart3 } from 'lucide-react'
 import Poll_data  from '@/app/types/Poll_types';
+import Confirm_delete from './Confirm_delete';
 
 function MyPolls({ user_id }: { user_id: string }) {
 
@@ -40,12 +41,18 @@ function MyPolls({ user_id }: { user_id: string }) {
     };
 
     const handleDeletePoll = async (pollId: string) => {
-        if (!confirm("Are you sure you want to delete this poll?")) return;
+        // (<Confirm_delete />)
         
         try {
-            // Add delete API call when available
-            setPolls(polls.filter((p: Poll_data) => p._id !== pollId));
-        } catch (err) {
+            const res = await fetch(`/api/poll/delete`, {
+                method: 'DELETE',
+                headers: {
+                'Content-Type': 'application/json',
+            },
+
+            body: JSON.stringify({ pollId: pollId }), 
+        });
+        }catch (err) {
             console.error("Delete failed:", err);
         }
     };
@@ -170,14 +177,19 @@ function MyPolls({ user_id }: { user_id: string }) {
                                     )}
                                 </button>
 
-                                <button
-                                    onClick={() => handleDeletePoll(poll._id || '')}
-                                    className='flex-1 sm:flex-initial border-2 border-black bg-white text-black px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold hover:bg-[#f3f4f6] transition-colors active:translate-y-[1px]'
-                                    title="Delete poll"
+                                <Confirm_delete
+                                    onConfirm={() => handleDeletePoll(poll._id || '')}
+                                    title="Delete poll?"
+                                    description="This will permanently delete this poll and all its data."
                                 >
-                                    <span className='hidden sm:inline'>Delete</span>
-                                    <span className='sm:hidden'>Del</span>
-                                </button>
+                                    <button
+                                        className='flex-1 sm:flex-initial border-2 border-black bg-white text-black px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold hover:bg-[#f3f4f6] transition-colors active:translate-y-[1px]'
+                                        title="Delete poll"
+                                    >
+                                        <span className='hidden sm:inline'>Delete</span>
+                                        <span className='sm:hidden'>Del</span>
+                                    </button>
+                                </Confirm_delete>
                             </div>
                         </div>
                     );
