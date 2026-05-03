@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { Copy, Check, BarChart3 } from 'lucide-react'
 import Poll_data  from '@/app/types/Poll_types';
 import Confirm_delete from './Confirm_delete';
+import { useAuth } from '@clerk/nextjs';
 
 function MyPolls({ user_id }: { user_id: string }) {
 
@@ -10,6 +11,8 @@ function MyPolls({ user_id }: { user_id: string }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [copiedId, setCopiedId] = useState<string | null>(null);
+
+    const { userId } = useAuth();
 
     useEffect(() => {
         async function fetchPolls() {
@@ -50,7 +53,7 @@ function MyPolls({ user_id }: { user_id: string }) {
                 'Content-Type': 'application/json',
             },
 
-            body: JSON.stringify({ pollId: pollId }), 
+            body: JSON.stringify({ pollId: pollId , userId : userId }), 
         });
         }catch (err) {
             console.error("Delete failed:", err);

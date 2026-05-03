@@ -2,17 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import dbconnect from "@/lib/mongodb";
 import { Poll, Vote, Chat, User } from "@/app/models/schema";
 import mongoose from "mongoose";
-import { auth } from "@clerk/nextjs/server";
 
 export async function DELETE(req: NextRequest) {
   await dbconnect();
 
-  const { userId } = auth();
+  const { userId , pollId } = await req.json();
+
   if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
-  const { pollId } = await req.json();
 
   if (!mongoose.Types.ObjectId.isValid(pollId)) {
     return NextResponse.json({ error: "Invalid pollId" }, { status: 400 });
@@ -54,7 +52,7 @@ export async function DELETE(req: NextRequest) {
       { message: "Poll deleted successfully" },
       { status: 200 }
     );
-  } catch (err) {
+  } catch (_err) {
     await session.abortTransaction();
     return NextResponse.json(
       { error: "Server error" },
