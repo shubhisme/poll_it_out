@@ -1,4 +1,4 @@
-# poll_it_out
+# POLL IT OUT
 
 A modern polling application built with TypeScript.
 
