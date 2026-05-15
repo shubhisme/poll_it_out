@@ -401,13 +401,13 @@ const Page = () => {
                     <Card className='w-full m-0 flex flex-col shadow-none border-none p-0 bg-transparent h-full'>
                     <CardHeader className='flex flex-col gap-4 p-0 w-full flex-shrink-0'>
                         <div className='flex flex-col justify-between sm:flex-row items-start w-full gap-3'>
-                            <div className='flex items-start gap-2 text-sm px-2 py-1 flex-shrink-0'>
-                                <div className='flex flex-col gap-2'>
-                                    <CardTitle className='font-bold text-2xl'>{question}</CardTitle>
+                            <div className='flex items-start gap-2 text-sm px-2 py-1 flex-1 min-w-0'>
+                                <div className='flex flex-col gap-2 w-full'>
+                                    <CardTitle className='font-bold text-2xl break-words'>{question}</CardTitle>
                                     <CardDescription>{description}</CardDescription>
                                 </div>
                             </div>
-                            <div>
+                            <div className='flex-shrink-0'>
                             <Select
                                 value={chartType}
                                 onValueChange={(val) => setChartType(val as "bar" | "pie")}
