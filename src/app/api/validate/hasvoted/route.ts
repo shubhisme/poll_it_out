@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
         const voteIn = await Vote.findOne({poll_id : poll_id , user_id :userID});
 
-        const created_poll = await Poll.findById({poll_id}).select("created_by");
+        const created_poll = await Poll.findById(poll_id).select("created_by");
 
         console.log({voteIn : voteIn})
         if(voteIn || (created_poll.created_by.toString() === userID._id.toString())){
