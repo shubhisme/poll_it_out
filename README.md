@@ -77,6 +77,16 @@ To build for production:
 npm run build
 ```
 
+### Environment variables
+
+Configure the Redis connection with the complete connection URL used by the new Redis database:
+
+```env
+REDIS_URL=redis://default:<password>@<host>:<port>
+```
+
+The live count uses this Redis connection to refresh expiring poll-presence keys every five seconds.
+
 ## Workflow & Logic
 
 ### 1. Creating a Poll

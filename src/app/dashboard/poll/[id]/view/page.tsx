@@ -258,9 +258,11 @@ const Page = () => {
             setTotalVotes(total);
         })
 
+        return () => {
+            socket.off("update_poll");
+        };
     } , [socket , pollId , userId])
 
-        // listening to live count
     useEffect(()=>{
 
         if(!socket || !pollId){
@@ -271,7 +273,67 @@ const Page = () => {
             setLiveCount(count);
         })
 
+        return () => {
+            socket.off("total_joined");
+        };
     } , [socket , pollId , userId])
+
+    useEffect(() => {
+        if (!pollId || !userId) {
+            return;
+        }
+
+        let isActive = true;
+
+        const refreshPresence = async () => {
+            try {
+                const presenceResponse = await fetch("/api/poll/refresh_presence", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ pollid: pollId, user_id: userId })
+                });
+
+                if (!presenceResponse.ok) {
+                    throw new Error(`Presence refresh failed (${presenceResponse.status})`);
+                }
+
+                const countResponse = await fetch("/api/poll/get_live_count", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ pollid: pollId })
+                });
+
+                if (!countResponse.ok) {
+                    throw new Error(`Live count request failed (${countResponse.status})`);
+                }
+
+                const data: unknown = await countResponse.json();
+                if (
+                    isActive &&
+                    typeof data === "object" &&
+                    data !== null &&
+                    "count" in data &&
+                    typeof data.count === "number"
+                ) {
+                    setLiveCount(data.count);
+                }
+            } catch (error) {
+                console.error("Failed to refresh live count:", error);
+            }
+        };
+
+        void refreshPresence();
+        const intervalId = window.setInterval(refreshPresence, 5000);
+
+        return () => {
+            isActive = false;
+            window.clearInterval(intervalId);
+        };
+    }, [pollId, userId]);
 
     const chart = chartType === "bar" ? (
         <BarChart
